@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=development
+      - DATABASE_URL=sqlite:///./exam_transcripts.db
+      - SECRET_KEY=dev-secret-key-change-in-production
+    volumes:
+      - ./app:/app/app
+      - ./exam_transcripts.db:/app/exam_transcripts.db
+    restart: unless-stopped
+
+  # Optional: PostgreSQL database
+  # postgres:
+  #   image: postgres:15
+  #   environment:
+  #     POSTGRES_DB: exam_transcripts
+  #     POSTGRES_USER: postgres
+  #     POSTGRES_PASSWORD: password
+  #   ports:
+  #     - "5432:5432"
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+
+# volumes:
+#   postgres_data:
