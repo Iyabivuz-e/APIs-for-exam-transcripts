@@ -6,6 +6,7 @@ It configures middleware, routers, database connections, and logging.
 """
 
 import logging
+import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -50,8 +51,62 @@ async def lifespan(app: FastAPI):
     
     # Auto-create users if needed (for free tier Render)
     try:
-        from auto_seed_users import auto_create_users_if_needed
-        await auto_create_users_if_needed()
+        # Check if we should create users
+        create_users_env = os.getenv('CREATE_INITIAL_USERS', 'false').lower()
+        database_url = os.getenv('DATABASE_URL', '')
+        
+        if create_users_env in ['true', '1', 'yes'] and database_url.startswith('postgresql'):
+            from app.db.session import get_db
+            from app.models.user import User, UserRole
+            from app.core.security import hash_password
+            
+            logger.info("🌱 Auto-creating initial users for production...")
+            
+            # Get database session
+            db_gen = get_db()
+            db = next(db_gen)
+            
+            try:
+                # Check if users already exist
+                existing_count = db.query(User).count()
+                
+                if existing_count > 0:
+                    logger.info(f"✅ Database already has {existing_count} users, skipping auto-creation")
+                else:
+                    # Create users
+                    users_to_create = [
+                        ("admin@example.com", "admin123", UserRole.ADMIN),
+                        ("supervisor@example.com", "supervisor123", UserRole.SUPERVISOR),
+                        ("user@example.com", "user123", UserRole.USER),
+                        ("john.doe@example.com", "password123", UserRole.USER),
+                        ("jane.smith@example.com", "password123", UserRole.USER)
+                    ]
+                    
+                    logger.info(f"👥 Creating {len(users_to_create)} initial users...")
+                    
+                    for email, password, role in users_to_create:
+                        hashed_password = hash_password(password)
+                        user = User(email=email, hashed_password=hashed_password, role=role)
+                        db.add(user)
+                        logger.info(f"✅ Added user: {email} ({role.value})")
+                    
+                    db.commit()
+                    
+                    final_count = db.query(User).count()
+                    logger.info(f"🎉 Successfully created {final_count} users in production database!")
+                    
+                    logger.info("📧 Login credentials available:")
+                    logger.info("👤 Admin: admin@example.com / admin123")
+                    logger.info("👤 Supervisor: supervisor@example.com / supervisor123")
+                    logger.info("👤 User: user@example.com / user123")
+                    logger.info("👤 User: john.doe@example.com / password123")
+                    logger.info("👤 User: jane.smith@example.com / password123")
+                    
+            finally:
+                db.close()
+        else:
+            logger.info("🚫 Auto user creation disabled or not needed")
+            
     except Exception as e:
         logger.warning(f"Auto user creation failed: {e}")
     
