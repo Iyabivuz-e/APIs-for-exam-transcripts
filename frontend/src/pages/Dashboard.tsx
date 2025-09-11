@@ -48,7 +48,7 @@ export function Dashboard() {
       
       setUsersWithExams(usersWithExamsSet);
     } catch (error) {
-      console.error('Error checking users with exams:', error);
+      // Silently fail - UI will handle empty state
     }
   }, []);
 
@@ -77,7 +77,6 @@ export function Dashboard() {
       }
     } catch (err) {
       setError('Failed to load dashboard data');
-      console.error('Dashboard load error:', err);
     } finally {
       setIsLoading(false);
     }

@@ -221,7 +221,6 @@ class ApiClient {
       );
       return userAssignments.length > 0;
     } catch (error) {
-      console.error('Error checking user ungraded exams:', error);
       return false;
     }
   }

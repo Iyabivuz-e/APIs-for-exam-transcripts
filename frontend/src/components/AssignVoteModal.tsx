@@ -45,10 +45,8 @@ export function AssignVoteModal({ isOpen, onClose, onSuccess }: AssignVoteModalP
       const ungradedAssignments = await apiClient.getUngradedAssignments();
       setAssignments(ungradedAssignments || []);
       
-      console.log('📚 Loaded ungraded assignments:', ungradedAssignments);
     } catch (err) {
       setError('Failed to load ungraded assignments');
-      console.error('Error loading ungraded assignments:', err);
     } finally {
       setIsLoadingData(false);
     }
@@ -56,11 +54,6 @@ export function AssignVoteModal({ isOpen, onClose, onSuccess }: AssignVoteModalP
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    console.log('🎯 Vote assignment attempt:', {
-      selectedAssignment,
-      vote
-    });
     
     if (!selectedAssignment || !vote) {
       setError('Please select an assignment and enter a vote');
@@ -77,24 +70,16 @@ export function AssignVoteModal({ isOpen, onClose, onSuccess }: AssignVoteModalP
     setError(null);
 
     try {
-      console.log('📤 Sending vote assignment:', {
-        examId: selectedAssignment.exam_id,
-        userId: selectedAssignment.user_id,
-        vote: voteNumber
-      });
-
       await apiClient.assignVote(selectedAssignment.exam_id, {
         user_id: selectedAssignment.user_id,
         vote: voteNumber
       });
 
-      console.log('Vote assigned successfully');
       setSelectedAssignment(null);
       setVote('');
       onSuccess();
       onClose();
     } catch (err: any) {
-      console.error('Vote assignment failed:', err);
       setError(err.message || 'Failed to assign vote');
     } finally {
       setIsLoading(false);

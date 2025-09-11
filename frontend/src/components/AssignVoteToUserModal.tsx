@@ -50,14 +50,12 @@ export function AssignVoteToUserModal({
       );
       
       setUserExams(userAssignments || []);
-      console.log(`📚 Loaded ungraded exams for user ${userEmail}:`, userAssignments);
     } catch (err) {
       setError('Failed to load user exams');
-      console.error('Error loading user exams:', err);
     } finally {
       setIsLoadingData(false);
     }
-  }, [userId, userEmail]);
+  }, [userId]);
 
   // Load user's ungraded exams when modal opens
   useEffect(() => {
@@ -89,13 +87,11 @@ export function AssignVoteToUserModal({
         vote: voteNumber
       });
 
-      console.log(`✅ Vote assigned: ${userEmail} - ${selectedExam.exam_title} - ${voteNumber}`);
       setSelectedExam(null);
       setVote('');
       onSuccess();
       onClose();
     } catch (err: any) {
-      console.error('❌ Vote assignment failed:', err);
       setError(err.message || 'Failed to assign vote');
     } finally {
       setIsLoading(false);

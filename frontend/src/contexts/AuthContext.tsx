@@ -36,56 +36,37 @@ const initialState: AuthState = {
 
 // Simple reducer - easy to understand and debug
 function authReducer(state: AuthState, action: AuthAction): AuthState {
-  console.log('🔄 Auth reducer:', action.type, action);
-  
   switch (action.type) {
+    case 'SET_LOADING':
+      return { ...state, isLoading: action.payload };
     case 'LOGIN_START':
-      return {
-        ...state,
-        isLoading: true,
-        error: null,
-      };
-    
+      return { ...state, isLoading: true, error: null };
     case 'LOGIN_SUCCESS':
-      console.log('✅ LOGIN_SUCCESS - User logged in:', action.payload.email);
       return {
         ...state,
         user: action.payload,
+        isAuthenticated: true,
         isLoading: false,
         error: null,
-        isAuthenticated: true,
       };
-    
     case 'LOGIN_ERROR':
       return {
         ...state,
         user: null,
+        isAuthenticated: false,
         isLoading: false,
         error: action.payload,
-        isAuthenticated: false,
       };
-    
     case 'LOGOUT':
       return {
         ...state,
         user: null,
         isAuthenticated: false,
-        error: null,
         isLoading: false,
-      };
-    
-    case 'CLEAR_ERROR':
-      return {
-        ...state,
         error: null,
       };
-    
-    case 'SET_LOADING':
-      return {
-        ...state,
-        isLoading: action.payload,
-      };
-    
+    case 'CLEAR_ERROR':
+      return { ...state, error: null };
     default:
       return state;
   }
@@ -108,44 +89,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Check for existing authentication on mount
   useEffect(() => {
     const checkAuth = async () => {
-      const token = apiClient.getToken();
-      console.log('🔍 Auth check - Token found:', !!token);
+      const token = localStorage.getItem('token');
       
       if (token) {
         try {
-          // Verify token is still valid by fetching current user
           const user = await apiClient.getCurrentUser();
-          console.log('✅ Auth restored for user:', user.email);
           dispatch({ type: 'LOGIN_SUCCESS', payload: user });
         } catch (error) {
-          // Token is invalid or expired
-          console.warn('❌ Stored token is invalid:', error);
-          apiClient.setToken(null);
-          dispatch({ type: 'LOGOUT' });
+          localStorage.removeItem('token');
+          dispatch({ type: 'SET_LOADING', payload: false });
         }
       } else {
-        // No token found
-        console.log('ℹ️ No token found, setting loading to false');
         dispatch({ type: 'SET_LOADING', payload: false });
       }
     };
 
-    // Add a small delay to ensure DOM is ready
-    const timeoutId = setTimeout(checkAuth, 100);
-    
-    return () => clearTimeout(timeoutId);
+    checkAuth();
   }, []);
 
   // Login function
   const login = async (credentials: LoginRequest) => {
-    console.log('🚀 Login attempt for:', credentials.email);
     dispatch({ type: 'LOGIN_START' });
     try {
       const response = await apiClient.login(credentials);
-      console.log('✅ Login successful, user:', response.user.email);
       dispatch({ type: 'LOGIN_SUCCESS', payload: response.user });
     } catch (error) {
-      console.error('❌ Login failed:', error);
       const message = error instanceof ApiError 
         ? error.message 
         : 'Login failed. Please try again.';
@@ -159,8 +127,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       await apiClient.logout();
     } catch (error) {
-      // Log error but continue with logout
-      console.warn('Logout API call failed:', error);
+      // Continue with logout even if API call fails
     } finally {
       dispatch({ type: 'LOGOUT' });
     }

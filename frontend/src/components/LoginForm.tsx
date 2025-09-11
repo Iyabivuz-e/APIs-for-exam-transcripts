@@ -50,8 +50,7 @@ export function LoginForm() {
       await login(formData);
       // Redirect will be handled by the app router
     } catch (error) {
-      // Error is handled by the auth context
-      console.error('Login failed:', error);
+      // Error is handled by AuthContext
     }
   };
 

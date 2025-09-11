@@ -33,7 +33,6 @@ export function ManageUsersModal({ isOpen, onClose }: ManageUsersModalProps) {
       setUsers(Array.isArray(usersData) ? usersData : []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load users');
-      console.error('Failed to load users:', err);
     } finally {
       setIsLoading(false);
     }
