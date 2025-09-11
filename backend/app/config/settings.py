@@ -7,7 +7,7 @@ Uses Pydantic BaseSettings for environment variable management and validation.
 
 import logging
 from functools import lru_cache
-from typing import List, Union
+from typing import List, Union, Optional
 
 from pydantic import validator
 from pydantic_settings import BaseSettings
@@ -48,7 +48,18 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 30
 
     # CORS
-    allowed_origins: List[str] = ["http://localhost:3000", "http://localhost:8080", "https://api-is-for-exam-transcripts.vercel.app", "https://apis-for-exam-transcripts.vercel.app"]
+    allowed_origins: List[str] = [
+        "http://localhost:3000", 
+        "http://localhost:8080", 
+        "https://api-is-for-exam-transcripts.vercel.app",  # Your actual frontend
+        "https://apis-for-exam-transcripts.vercel.app",
+        # Development and preview URLs
+        "https://apis-for-exam-transcripts-frontend.vercel.app",
+        "https://exam-transcripts-frontend.vercel.app"
+    ]
+    
+    # Additional CORS setting for production
+    frontend_url: Optional[str] = None  # Can be set via environment variable
 
     # Logging
     log_level: str = "INFO"
@@ -101,6 +112,24 @@ class Settings(BaseSettings):
     def is_development(self) -> bool:
         """Check if environment is development."""
         return self.environment == "development"
+
+    @property
+    def cors_origins(self) -> List[str]:
+        """Get all CORS origins including dynamically added ones."""
+        origins = self.allowed_origins.copy()
+        if self.frontend_url and self.frontend_url not in origins:
+            origins.append(self.frontend_url)
+        
+        # In development, allow broader access for testing
+        if self.is_development:
+            origins.extend([
+                "http://localhost:3000",
+                "http://127.0.0.1:3000",
+                "http://localhost:8080",
+                "http://127.0.0.1:8080"
+            ])
+        
+        return list(set(origins))  # Remove duplicates
 
     class Config:
         """Pydantic configuration."""
