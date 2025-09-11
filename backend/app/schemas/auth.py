@@ -5,7 +5,6 @@ This module contains Pydantic schemas for authentication-related operations
 including login requests, token responses, and user registration.
 """
 
-
 from pydantic import EmailStr, Field
 
 from app.schemas.base import BaseSchema
@@ -46,7 +45,7 @@ class TokenData(BaseSchema):
     """
 
     sub: str = Field(..., description="Subject (user email)")
-    user_id: int = Field(..., description="User ID")
+    user_id: str = Field(..., description="User ID (UUID)")
     role: str = Field(..., description="User role")
     exp: int | None = Field(None, description="Expiration timestamp")
 

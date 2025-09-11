@@ -16,8 +16,8 @@ from app.db.base import Base
 # Import all models to ensure they are registered with SQLAlchemy
 # This prevents relationship resolution errors
 try:
+    from app.models.exam import Exam  # noqa: F401
     from app.models.user import User  # noqa: F401
-    from app.models.exam import Exam  # noqa: F401  
     from app.models.user_exam import UserExam  # noqa: F401
 except ImportError:
     # Models might not be available during initial setup
@@ -58,17 +58,19 @@ class DatabaseManager:
             connect_args = {}
             if self.settings.is_production:
                 # Production PostgreSQL settings
-                connect_args.update({
-                    "sslmode": self.settings.postgres_ssl_mode,
-                    "connect_timeout": 30,
-                })
-            
+                connect_args.update(
+                    {
+                        "sslmode": self.settings.postgres_ssl_mode,
+                        "connect_timeout": 30,
+                    }
+                )
+
             self.engine = create_engine(
-                database_url, 
+                database_url,
                 echo=self.settings.environment == "development",
                 connect_args=connect_args,
                 pool_pre_ping=True,  # Validate connections before use
-                pool_recycle=300,    # Recycle connections every 5 minutes
+                pool_recycle=300,  # Recycle connections every 5 minutes
             )
 
         # Create session factory

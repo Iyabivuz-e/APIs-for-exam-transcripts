@@ -6,7 +6,7 @@ with vote/grade information. This model handles the many-to-many relationship
 between users and exams while storing the vote for each user-exam combination.
 """
 
-from sqlalchemy import Column, Float, ForeignKey, Integer, UniqueConstraint
+from sqlalchemy import Column, Float, ForeignKey, String, UniqueConstraint
 from sqlalchemy.orm import relationship
 
 from app.db.base import Base
@@ -28,12 +28,12 @@ class UserExam(Base):
         exam: Relationship to Exam model
     """
 
-    # Foreign key relationships
+    # Foreign key relationships - Updated to use UUID strings
     user_id = Column(
-        Integer, ForeignKey("user.id", ondelete="CASCADE"), nullable=False, index=True
+        String(36), ForeignKey("user.id", ondelete="CASCADE"), nullable=False, index=True
     )
     exam_id = Column(
-        Integer, ForeignKey("exam.id", ondelete="CASCADE"), nullable=False, index=True
+        String(36), ForeignKey("exam.id", ondelete="CASCADE"), nullable=False, index=True
     )
 
     # Vote/grade for this user-exam combination
@@ -45,8 +45,8 @@ class UserExam(Base):
 
     # Composite unique constraint to prevent duplicate user-exam combinations
     __table_args__ = (
-        UniqueConstraint('user_id', 'exam_id', name='uq_user_exam'),
-        {"sqlite_autoincrement": True}
+        UniqueConstraint("user_id", "exam_id", name="uq_user_exam"),
+        {"sqlite_autoincrement": True},
     )
 
     def __repr__(self) -> str:

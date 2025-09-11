@@ -24,8 +24,8 @@ async def register_for_exam(
 ):
     """
     Register current user for an exam.
-    
-    Enforces business rule: "An user can have more than one exam, 
+
+    Enforces business rule: "An user can have more than one exam,
     but not the same exam multiple times"
 
     Args:

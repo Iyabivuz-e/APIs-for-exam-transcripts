@@ -1,153 +1,183 @@
-# Exam Transcripts Frontend
+# Frontend - Exam Transcripts
 
-A React TypeScript application for the Exam Transcripts API system.
+React TypeScript frontend application for the Exam Transcripts system.
 
 ## Features
 
-- 🔐 **Authentication**: JWT-based login with role management
-- 🎯 **Role-based Access**: Admin, Supervisor, and User roles
-- 📊 **Dashboard**: Personal and public exam views
-- 🎨 **Modern UI**: Tailwind CSS with responsive design
-- 🛡️ **Security**: Protected routes and secure API calls
-- 📱 **Responsive**: Mobile-first design approach
+- **Authentication**: JWT-based login with persistent sessions
+- **Role-based Access**: Different views for Admin, Supervisor, and User roles
+- **Dashboard**: Personal and public exam views
+- **Modern UI**: Tailwind CSS with responsive design
+- **Security**: Protected routes and secure API communication
+- **Type Safety**: Full TypeScript implementation
 
-## Quick Start
+## Tech Stack
 
-```bash
-# Install dependencies
-npm install
-
-# Start development server
-npm start
-
-# Build for production
-npm run build
-
-# Run tests
-npm test
-```
+- **React 18**: Modern hooks-based development
+- **TypeScript**: Type-safe JavaScript
+- **Tailwind CSS**: Utility-first CSS framework
+- **React Router**: Client-side routing
+- **Context API**: State management for authentication
 
 ## Project Structure
 
 ```
 src/
-├── components/          # Reusable UI components
-│   ├── ui/             # Basic UI components (Button, Input, Card)
-│   └── LoginForm.tsx   # Authentication form
-├── contexts/           # React contexts
-│   └── AuthContext.tsx # Authentication state management
-├── pages/              # Application pages
-│   └── Dashboard.tsx   # Main dashboard
-├── services/           # API services
-│   └── api.ts          # API client with authentication
-├── types/              # TypeScript type definitions
-│   └── index.ts        # Core API types
-├── App.tsx             # Main app with routing
-├── index.tsx           # React app entry point
-└── index.css           # Global styles with Tailwind
+├── components/        # Reusable UI components
+│   ├── ui/           # Base UI components (Button, Input, Card)
+│   └── [features]/   # Feature-specific components
+├── contexts/         # React context providers
+├── pages/            # Main application pages
+├── services/         # API client and utilities
+└── types/            # TypeScript type definitions
 ```
 
-## Key Components
+## Installation
 
-### Authentication
-- JWT token management with automatic refresh
-- Secure localStorage persistence
-- Context-based state management
+1. **Install dependencies**
+   ```bash
+   npm install
+   ```
 
-### UI Components
-- **Button**: Multiple variants (primary, secondary, destructive)
-- **Input**: Form inputs with validation styles
-- **Card**: Container component with title support
+2. **Start development server**
+   ```bash
+   npm start
+   ```
 
-### Dashboard
-- Role-based content rendering
-- User's assigned exams
-- Public exam listings
-- Quick action buttons for admins/supervisors
-
-## Configuration
-
-The app automatically proxies API requests to `http://localhost:8000` during development (configured in package.json).
+3. **Access the application**
+   - Development: http://localhost:3000
+   - The backend API is expected at http://localhost:8000
 
 ## Development
 
-Built with modern React patterns:
-- Functional components with hooks
-- TypeScript for type safety
-- Context API for state management
-- React Router for navigation
-- Tailwind CSS for styling
+### Available Scripts
 
-## Architecture Principles
+```bash
+# Start development server
+npm start
 
-Following **KISS (Keep It Simple Stupid)** principles:
-- Clear folder structure
-- Simple component hierarchy
-- Minimal but sufficient abstractions
-- Senior-level patterns that are easy to understand
-- 👨‍💼 Admin panel for exam creation
-- 👨‍🏫 Supervisor interface for grading
+# Run tests
+npm test
 
-## 🚀 Technology Stack
+# Build for production
+npm run build
 
-- **Framework**: React 18+
-- **Build Tool**: Vite
-- **State Management**: Context API or Zustand
-- **UI Framework**: Chakra UI or Material-UI
-- **HTTP Client**: Axios
-- **Router**: React Router v6
-- **Form Handling**: React Hook Form
-- **Styling**: Styled Components or Emotion
-
-## 🏗️ Planned Structure
-
-```
-frontend/
-├── public/
-├── src/
-│   ├── components/         # Reusable UI components
-│   ├── pages/             # Page components
-│   ├── hooks/             # Custom React hooks
-│   ├── services/          # API service layer
-│   ├── context/           # React context providers
-│   ├── utils/             # Utility functions
-│   ├── types/             # TypeScript type definitions
-│   └── assets/            # Static assets
-├── package.json
-└── vite.config.ts
+# Run tests with coverage
+npm test -- --coverage --watchAll=false
 ```
 
-## 🔗 API Integration
+### Code Style
 
-The frontend will connect to the backend API at:
-- **Development**: `http://localhost:8000`
-- **Production**: TBD
+The project uses:
+- ESLint for code linting
+- Prettier for code formatting
+- TypeScript for type checking
 
-## 📱 Responsive Design
+## Configuration
 
-The application will be fully responsive and work on:
-- 💻 Desktop computers
-- 📱 Mobile phones
-- 📟 Tablets
+### Environment Variables
 
-## 🧪 Testing Strategy
+The application automatically detects the API URL:
+- Development: http://localhost:8000 (proxied)
+- Production: Uses the deployed backend URL
 
-- **Unit Tests**: Jest + React Testing Library
-- **Integration Tests**: Cypress or Playwright
-- **Component Tests**: Storybook
+No additional configuration needed for basic setup.
 
-## 🚧 Development Status
+### API Integration
 
-**Status**: Planning Phase
+The frontend communicates with the backend through a centralized API client located in `src/services/api.ts`.
 
-**Next Steps**:
-1. Set up React project with Vite
-2. Configure TypeScript
-3. Set up UI framework
-4. Implement authentication flow
-5. Create dashboard layouts
-6. Build exam management interfaces
+## User Interface
 
----
+### Authentication
+- Login form with validation
+- Persistent sessions across page refreshes
+- Automatic logout on token expiration
 
-Check back soon for the React implementation! 🚀
+### Dashboard Views
+
+**Admin Users**:
+- Create and manage exams
+- View all users
+- Assign exams to users
+
+**Supervisor Users**:
+- Assign grades to user exams
+- View user progress
+- Manage supervised content
+
+**Regular Users**:
+- View assigned exams
+- See exam results
+- Access personal dashboard
+
+## Component Architecture
+
+### Base Components (`src/components/ui/`)
+- `Button`: Multiple variants (primary, secondary, destructive)
+- `Input`: Form inputs with validation states
+- `Card`: Container component for content sections
+
+### Feature Components
+- `LoginForm`: Authentication form with validation
+- `Dashboard`: Role-specific dashboard content
+- `CreateExamModal`: Exam creation interface
+- `ManageUsersModal`: User management interface
+
+## State Management
+
+The application uses React Context API for:
+- Authentication state
+- User session management
+- Global error handling
+
+## Routing
+
+Protected routes ensure users can only access authorized content:
+- `/login`: Public login page
+- `/`: Protected dashboard (redirects to login if not authenticated)
+
+## Testing
+
+The application includes:
+- Component tests for UI elements
+- Integration tests for user flows
+- Mock API responses for testing
+
+Run tests:
+```bash
+npm test
+```
+
+## Building for Production
+
+```bash
+npm run build
+```
+
+This creates an optimized production build in the `build/` directory.
+
+## Deployment
+
+### Vercel (Recommended)
+1. Connect your GitHub repository to Vercel
+2. Vercel automatically detects Create React App
+3. Deploy with automatic builds on push
+
+### Manual Deployment
+1. Build the application: `npm run build`
+2. Serve the `build/` directory with any static file server
+
+## Browser Support
+
+- Chrome (latest)
+- Firefox (latest)
+- Safari (latest)
+- Edge (latest)
+
+## Contributing
+
+1. Follow existing code patterns and naming conventions
+2. Add tests for new features
+3. Ensure TypeScript types are properly defined
+4. Update documentation for significant changes

@@ -121,7 +121,7 @@ class Exam(ExamBase, TimestampMixin):
     Used when returning exam information in API responses.
     """
 
-    id: int = Field(..., description="Exam's unique identifier")
+    id: str = Field(..., description="Exam's unique identifier (UUID)")
 
     class Config:
         """Pydantic configuration."""
@@ -163,15 +163,9 @@ class ExamFilterParams(BaseSchema):
     Used for filtering and sorting exam lists.
     """
 
-    title: str | None = Field(
-        None, description="Filter by exam title (partial match)"
-    )
-    date_from: date_type | None = Field(
-        None, description="Filter exams from this date"
-    )
-    date_to: date_type | None = Field(
-        None, description="Filter exams until this date"
-    )
+    title: str | None = Field(None, description="Filter by exam title (partial match)")
+    date_from: date_type | None = Field(None, description="Filter exams from this date")
+    date_to: date_type | None = Field(None, description="Filter exams until this date")
     sort_by: str | None = Field(
         "date", description="Sort field (date, title, created_at)"
     )
@@ -217,7 +211,7 @@ class UserExamResponse(BaseSchema):
     Used when returning exam information for a specific user.
     """
 
-    exam_id: int = Field(..., description="Exam ID")
+    exam_id: str = Field(..., description="Exam ID (UUID)")
     exam_title: str = Field(..., description="Exam title")
     exam_date: date_type = Field(..., description="Exam date")
     vote: float | None = Field(None, description="User's vote for this exam")
@@ -238,8 +232,8 @@ class VoteAssignment(BaseSchema):
     Used by supervisors to assign votes to user exams.
     """
 
-    user_id: int = Field(..., description="ID of the user to assign vote to")
-    exam_id: int = Field(..., description="ID of the exam to assign vote for")
+    user_id: str = Field(..., description="ID of the user to assign vote to (UUID)")
+    exam_id: str = Field(..., description="ID of the exam to assign vote for (UUID)")
     vote: float = Field(..., ge=0, le=100, description="Vote/grade (0-100)")
 
     @validator("vote")

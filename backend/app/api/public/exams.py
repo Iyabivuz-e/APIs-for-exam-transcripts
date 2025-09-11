@@ -19,9 +19,7 @@ router = APIRouter()
 
 @router.get("/exams", response_model=dict)
 async def get_public_exams(
-    title: str | None = Query(
-        None, description="Filter by exam title (partial match)"
-    ),
+    title: str | None = Query(None, description="Filter by exam title (partial match)"),
     date_from: date | None = Query(None, description="Filter exams from this date"),
     date_to: date | None = Query(None, description="Filter exams until this date"),
     sort_by: str = Query("date", description="Sort field (date, title, created_at)"),

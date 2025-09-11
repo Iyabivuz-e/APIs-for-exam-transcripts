@@ -5,7 +5,6 @@ This module contains Pydantic schemas for user-related operations
 including registration, authentication, and user management.
 """
 
-
 from pydantic import EmailStr, Field, validator
 
 from app.core.permissions import UserRole
@@ -118,7 +117,7 @@ class User(UserBase, TimestampMixin):
     Excludes sensitive information like password.
     """
 
-    id: int = Field(..., description="User's unique identifier")
+    id: str = Field(..., description="User's unique identifier (UUID)")
     role: UserRole = Field(..., description="User's role")
 
     class Config:

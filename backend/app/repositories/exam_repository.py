@@ -49,12 +49,12 @@ class ExamRepository:
 
         return exam
 
-    async def get_by_id(self, exam_id: int) -> Exam | None:
+    async def get_by_id(self, exam_id: str) -> Exam | None:
         """
         Get exam by ID.
 
         Args:
-            exam_id: Exam's ID
+            exam_id: Exam's ID (UUID string)
 
         Returns:
             Exam or None: Exam if found, None otherwise
@@ -121,7 +121,7 @@ class ExamRepository:
 
     async def update(
         self,
-        exam_id: int,
+        exam_id: str,
         title: str | None = None,
         exam_date: date | None = None,
     ) -> Exam | None:
@@ -129,7 +129,7 @@ class ExamRepository:
         Update exam information.
 
         Args:
-            exam_id: Exam's ID
+            exam_id: Exam's ID (UUID string)
             title: New title
             exam_date: New date
 
@@ -151,12 +151,12 @@ class ExamRepository:
 
         return exam
 
-    async def delete(self, exam_id: int) -> bool:
+    async def delete(self, exam_id: str) -> bool:
         """
         Delete exam by ID.
 
         Args:
-            exam_id: Exam's ID
+            exam_id: Exam's ID (UUID string)
 
         Returns:
             bool: True if exam was deleted, False if not found
@@ -213,12 +213,12 @@ class ExamRepository:
 
         return query.count()
 
-    async def get_user_exams(self, user_id: int) -> list[UserExam]:
+    async def get_user_exams(self, user_id: str) -> list[UserExam]:
         """
         Get all exams for a specific user.
 
         Args:
-            user_id: User's ID
+            user_id: User's ID (UUID string)
 
         Returns:
             List[UserExam]: List of user exam associations
@@ -230,15 +230,13 @@ class ExamRepository:
             .all()
         )
 
-    async def assign_exam_to_user(
-        self, user_id: int, exam_id: int
-    ) -> UserExam | None:
+    async def assign_exam_to_user(self, user_id: str, exam_id: str) -> UserExam | None:
         """
         Assign an exam to a user.
 
         Args:
-            user_id: User's ID
-            exam_id: Exam's ID
+            user_id: User's ID (UUID string)
+            exam_id: Exam's ID (UUID string)
 
         Returns:
             UserExam or None: Created association if successful, None if already exists
@@ -262,14 +260,14 @@ class ExamRepository:
         return user_exam
 
     async def assign_vote(
-        self, user_id: int, exam_id: int, vote: float
+        self, user_id: str, exam_id: str, vote: float
     ) -> UserExam | None:
         """
         Assign a vote to a user's exam.
 
         Args:
-            user_id: User's ID
-            exam_id: Exam's ID
+            user_id: User's ID (UUID string)
+            exam_id: Exam's ID (UUID string)
             vote: Vote/grade to assign
 
         Returns:
@@ -291,12 +289,12 @@ class ExamRepository:
 
         return user_exam
 
-    async def get_exam_statistics(self, exam_id: int) -> dict:
+    async def get_exam_statistics(self, exam_id: str) -> dict:
         """
         Get statistics for a specific exam.
 
         Args:
-            exam_id: Exam's ID
+            exam_id: Exam's ID (UUID string)
 
         Returns:
             dict: Dictionary containing exam statistics

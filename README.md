@@ -1,294 +1,134 @@
-# 📚 Exam Transcripts API
+# Exam Transcripts API
 
-A comprehensive RESTful API for managing exam transcripts with role-based access control, built with FastAPI and modern Python practices.
+A RESTful API for managing exam transcripts with role-based access control, built with FastAPI and React.
 
-## 🎯 Project Overview
+## Features
 
-This API system manages exam transcripts with three distinct user roles:
-- **Admin**: Can create new exams
-- **Supervisor**: Can assign votes/grades to user exams  
-- **User**: Can view their own exam results
+- **Authentication & Authorization**: JWT-based authentication with role-based access (Admin, Supervisor, User)
+- **Exam Management**: CRUD operations for exam records
+- **User Management**: User registration and profile management
+- **Role-based Permissions**: Different access levels for different user types
+- **Modern Architecture**: FastAPI backend with React frontend
 
-## ✨ Features
+## Architecture
 
-### 🔐 Authentication & Authorization
-- JWT-based authentication with Bearer tokens
-- Role-based access control (Admin, Supervisor, User)
-- Secure password hashing with bcrypt
-
-### 📋 Exam Management
-- Create exams (Admin only)
-- Assign grades/votes (Supervisor only)
-- View personal exam results (Users)
-- Public exam listing with filtering and sorting
-
-### 🔍 Filtering & Sorting
-- Filter exams by title (partial match)
-- Filter by date range
-- Sort by date, title, or creation time
-- Pagination support
-
-### 📊 Data Validation
-- Comprehensive input validation with Pydantic
-- Business rule enforcement (no duplicate exam assignments)
-- Grade validation (0-100 scale)
-
-## 🏗️ Architecture
-
-### Clean Architecture Principles
 ```
-📁 app/
-├── 📁 api/           # API routes and endpoints
-│   ├── 📁 auth/      # Authentication routes
-│   ├── 📁 public/    # Public endpoints
-│   └── 📁 private/   # Protected endpoints
-├── 📁 core/          # Cross-cutting concerns
-├── 📁 db/            # Database configuration
-├── 📁 models/        # SQLAlchemy models
-├── 📁 schemas/       # Pydantic schemas
-├── 📁 repositories/  # Data access layer
-├── 📁 services/      # Business logic layer
-└── 📁 config/        # Configuration settings
+├── backend/          # FastAPI REST API
+├── frontend/         # React TypeScript application
+└── docs/            # API documentation
 ```
 
-## 🚀 Getting Started
+## Tech Stack
+
+### Backend
+- **FastAPI**: Modern Python web framework
+- **SQLAlchemy**: Database ORM
+- **PostgreSQL**: Production database
+- **JWT**: Authentication tokens
+- **Pytest**: Testing framework
+
+### Frontend
+- **React 18**: User interface library
+- **TypeScript**: Type-safe JavaScript
+- **Tailwind CSS**: Utility-first CSS framework
+- **React Router**: Client-side routing
+
+## Quick Start
 
 ### Prerequisites
 - Python 3.11+
-- UV package manager
-- SQLite (default) or PostgreSQL
+- Node.js 18+
+- PostgreSQL (for production)
 
-### Installation
+### Development Setup
 
 1. **Clone the repository**
    ```bash
    git clone <repository-url>
-   cd APIs-for-exam-transcripts/backend
+   cd APIs-for-exam-transcripts
    ```
 
-2. **Install dependencies with UV**
+2. **Backend Setup**
    ```bash
-   uv sync
-   ```
-
-3. **Set up environment variables**
-   ```bash
+   cd backend
+   pip install -r requirements.txt
    cp .env.example .env
-   # Edit .env with your configuration
+   # Configure your .env file
+   python seed_users.py  # Create test users
+   uvicorn app.main:app --reload
    ```
 
-4. **Run the application**
+3. **Frontend Setup**
    ```bash
-   uv run uvicorn app.main:app --reload
+   cd frontend
+   npm install
+   npm start
    ```
 
-The API will be available at `http://localhost:8000`
+4. **Access the application**
+   - Frontend: http://localhost:3000
+   - Backend API: http://localhost:8000
+   - API Docs: http://localhost:8000/docs
 
-### 📖 API Documentation
-- **Swagger UI**: `http://localhost:8000/docs`
-- **ReDoc**: `http://localhost:8000/redoc`
+## Default Test Users
 
-## 🔑 API Endpoints
+- **Admin**: admin@example.com / admin123
+- **Supervisor**: supervisor@example.com / supervisor123
+- **User**: user@example.com / user123
 
-### Authentication
-- `POST /auth/login` - User login
-- `POST /auth/refresh` - Refresh token
-- `POST /auth/logout` - User logout
-- `GET /auth/me` - Get current user info
+## Production Deployment
 
-### Public Endpoints
-- `GET /public/exams` - List all exams (with filtering/sorting)
-- `GET /public/exams/{id}` - Get exam details
+### Backend (Render)
+1. Connect your GitHub repository to Render
+2. Set environment variables (DATABASE_URL, SECRET_KEY, etc.)
+3. Deploy as web service
 
-### Private Endpoints
+### Frontend (Vercel)
+1. Connect your GitHub repository to Vercel
+2. Set build command: `npm run build`
+3. Deploy automatically on push
 
-#### User Endpoints
-- `GET /private/users/me/exams` - Get user's exam results
+## API Documentation
 
-#### Admin Endpoints (Admin only)
-- `POST /private/admin/exams` - Create new exam
+Interactive API documentation is available at `/docs` when running the backend server.
 
-#### Supervisor Endpoints (Supervisor only)
-- `PUT /private/supervisor/exams/{id}/vote` - Assign grade to user exam
+## Testing
 
-## 📊 Database Schema
-
-### User Model
-```python
-class User:
-    id: int
-    email: str (unique)
-    hashed_password: str
-    role: UserRole (admin, supervisor, user)
-    created_at: datetime
-    updated_at: datetime
-```
-
-### Exam Model
-```python
-class Exam:
-    id: int
-    title: str (unique)
-    date: date
-    created_at: datetime
-    updated_at: datetime
-```
-
-### UserExam Association
-```python
-class UserExam:
-    id: int
-    user_id: int (FK)
-    exam_id: int (FK)
-    vote: float (0-100, nullable)
-    created_at: datetime
-    updated_at: datetime
-```
-
-## 🧪 Testing
-
-### Run Tests
+### Backend Tests
 ```bash
-# Run all tests
-uv run pytest
-
-# Run with coverage
-uv run pytest --cov=app
-
-# Run specific test types
-uv run pytest tests/unit/
-uv run pytest tests/integration/
-uv run pytest tests/e2e/
+cd backend
+pytest
 ```
 
-### Test Structure
-- **Unit Tests**: Test individual components
-- **Integration Tests**: Test API endpoints
-- **E2E Tests**: Test complete workflows
-
-## 🔧 Development
-
-### Code Quality Tools
+### Frontend Tests
 ```bash
-# Format code
-uv run black .
-
-# Lint code
-uv run ruff check .
-
-# Type checking
-uv run mypy app/
+cd frontend
+npm test
 ```
 
-### Database Operations
-```bash
-# Create migration
-uv run alembic revision --autogenerate -m "migration message"
+## Environment Variables
 
-# Apply migrations
-uv run alembic upgrade head
+### Backend
+- `DATABASE_URL`: Database connection string
+- `SECRET_KEY`: JWT signing key
+- `ENVIRONMENT`: development/production
+- `ALLOWED_ORIGINS`: CORS allowed origins
 
-# Rollback migration
-uv run alembic downgrade -1
-```
+### Frontend
+- `REACT_APP_API_URL`: Backend API URL (auto-configured)
 
-## 🌍 Environment Configuration
-
-### Environment Variables
-```env
-# Server
-ENVIRONMENT=development
-HOST=0.0.0.0
-PORT=8000
-
-# Database
-DATABASE_URL=sqlite:///./exam_transcripts.db
-# For PostgreSQL: postgresql://user:pass@host/db
-
-# Security
-SECRET_KEY=your-secret-key
-ACCESS_TOKEN_EXPIRE_MINUTES=30
-
-# CORS
-ALLOWED_ORIGINS=["http://localhost:3000"]
-```
-
-## 🚢 Deployment
-
-### Using Docker (Coming Soon)
-```bash
-# Build image
-docker build -t exam-transcripts-api .
-
-# Run container
-docker run -p 8000:8000 exam-transcripts-api
-```
-
-### Production Checklist
-- [ ] Change `SECRET_KEY` in production
-- [ ] Set `ENVIRONMENT=production`
-- [ ] Configure production database
-- [ ] Set up HTTPS
-- [ ] Configure logging
-- [ ] Set up monitoring
-
-## 📝 Usage Examples
-
-### Authentication
-```bash
-# Login
-curl -X POST "http://localhost:8000/auth/login" \
-  -H "Content-Type: application/json" \
-  -d '{"email": "admin@example.com", "password": "password"}'
-
-# Use token in subsequent requests
-curl -X GET "http://localhost:8000/auth/me" \
-  -H "Authorization: Bearer <your-token>"
-```
-
-### Create Exam (Admin)
-```bash
-curl -X POST "http://localhost:8000/private/admin/exams" \
-  -H "Authorization: Bearer <admin-token>" \
-  -H "Content-Type: application/json" \
-  -d '{"title": "Mathematics Final", "date": "2024-06-15"}'
-```
-
-### Assign Grade (Supervisor)
-```bash
-curl -X PUT "http://localhost:8000/private/supervisor/exams/1/vote" \
-  -H "Authorization: Bearer <supervisor-token>" \
-  -H "Content-Type: application/json" \
-  -d '{"user_id": 1, "exam_id": 1, "vote": 85.5}'
-```
-
-## 🤝 Contributing
+## Contributing
 
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes
-4. Add tests
-5. Run quality checks
-6. Submit a pull request
+4. Add tests for new functionality
+5. Submit a pull request
 
-## 📄 License
+## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the LICENSE file for details.
 
-## 🛠️ Technology Stack
+## Support
 
-- **Framework**: FastAPI
-- **Database**: SQLAlchemy + SQLite/PostgreSQL
-- **Authentication**: JWT with python-jose
-- **Validation**: Pydantic
-- **Testing**: Pytest
-- **Code Quality**: Ruff + Black
-- **Package Management**: UV
-
-## 📧 Support
-
-For support or questions, please open an issue in the repository.
-
----
-
-**Built with ❤️ using FastAPI and modern Python practices**
+For issues and questions, please use the GitHub Issues page.

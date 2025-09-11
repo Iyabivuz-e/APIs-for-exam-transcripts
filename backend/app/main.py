@@ -23,15 +23,18 @@ from app.db.session import create_tables
 def setup_logging() -> None:
     """Configure application logging."""
     settings = get_settings()
-    
+
     # Configure root logger
     logging.basicConfig(
         level=getattr(logging, settings.log_level),
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s" if settings.is_production
-        else "%(levelname)s:     %(message)s",
+        format=(
+            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+            if settings.is_production
+            else "%(levelname)s:     %(message)s"
+        ),
         datefmt="%Y-%m-%d %H:%M:%S",
     )
-    
+
     # Reduce noise from third-party libraries in production
     if settings.is_production:
         logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
@@ -44,74 +47,86 @@ async def lifespan(app: FastAPI):
     # Startup
     setup_logging()
     await create_tables()
-    
+
     logger = logging.getLogger(__name__)
     settings = get_settings()
     logger.info(f"Starting Exam Transcripts API in {settings.environment} mode")
-    
+
     # Auto-create users if needed (for free tier Render)
     try:
         # Check if we should create users
-        create_users_env = os.getenv('CREATE_INITIAL_USERS', 'false').lower()
-        database_url = os.getenv('DATABASE_URL', '')
-        
-        if create_users_env in ['true', '1', 'yes'] and database_url.startswith('postgresql'):
+        create_users_env = os.getenv("CREATE_INITIAL_USERS", "false").lower()
+        database_url = os.getenv("DATABASE_URL", "")
+
+        if create_users_env in ["true", "1", "yes"] and database_url.startswith(
+            "postgresql"
+        ):
+            from app.core.security import hash_password
             from app.db.session import get_db
             from app.models.user import User, UserRole
-            from app.core.security import hash_password
-            
+
             logger.info("🌱 Auto-creating initial users for production...")
-            
+
             # Get database session
             db_gen = get_db()
             db = next(db_gen)
-            
+
             try:
                 # Check if users already exist
                 existing_count = db.query(User).count()
-                
+
                 if existing_count > 0:
-                    logger.info(f"✅ Database already has {existing_count} users, skipping auto-creation")
+                    logger.info(
+                        f"✅ Database already has {existing_count} users, skipping auto-creation"
+                    )
                 else:
                     # Create users
                     users_to_create = [
                         ("admin@example.com", "admin123", UserRole.ADMIN),
-                        ("supervisor@example.com", "supervisor123", UserRole.SUPERVISOR),
+                        (
+                            "supervisor@example.com",
+                            "supervisor123",
+                            UserRole.SUPERVISOR,
+                        ),
                         ("user@example.com", "user123", UserRole.USER),
                         ("john.doe@example.com", "password123", UserRole.USER),
-                        ("jane.smith@example.com", "password123", UserRole.USER)
+                        ("jane.smith@example.com", "password123", UserRole.USER),
                     ]
-                    
+
                     logger.info(f"👥 Creating {len(users_to_create)} initial users...")
-                    
+
                     for email, password, role in users_to_create:
                         hashed_password = hash_password(password)
-                        user = User(email=email, hashed_password=hashed_password, role=role)
+                        user = User(
+                            email=email, hashed_password=hashed_password, role=role
+                        )
                         db.add(user)
                         logger.info(f"✅ Added user: {email} ({role.value})")
-                    
+
                     db.commit()
-                    
+
                     final_count = db.query(User).count()
-                    logger.info(f"🎉 Successfully created {final_count} users in production database!")
-                    
+                    logger.info(
+                        f"🎉 Successfully created {final_count} users in production database!"
+                    )
+
                     logger.info("📧 Login credentials available:")
                     logger.info("👤 Admin: admin@example.com / admin123")
                     logger.info("👤 Supervisor: supervisor@example.com / supervisor123")
                     logger.info("👤 User: user@example.com / user123")
                     logger.info("👤 User: john.doe@example.com / password123")
                     logger.info("👤 User: jane.smith@example.com / password123")
-                    
+
             finally:
                 db.close()
         else:
             logger.info("🚫 Auto user creation disabled or not needed")
-            
+
     except Exception as e:
         logger.warning(f"Auto user creation failed: {e}")
-    
+
     yield
-    
+
     # Shutdown
     logger.info("Shutting down Exam Transcripts API")
 
@@ -182,7 +197,11 @@ def create_application() -> FastAPI:
         return {
             "message": "Welcome to Exam Transcripts API",
             "version": "0.1.0",
-            "docs": "/docs" if settings.enable_docs else "Documentation disabled in production",
+            "docs": (
+                "/docs"
+                if settings.enable_docs
+                else "Documentation disabled in production"
+            ),
             "health": "/health",
         }
 

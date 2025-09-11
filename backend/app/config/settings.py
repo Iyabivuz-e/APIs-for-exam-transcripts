@@ -7,9 +7,9 @@ Uses Pydantic BaseSettings for environment variable management and validation.
 
 import logging
 from functools import lru_cache
-from typing import List, Union, Optional
+from typing import List, Optional, Union
 
-from pydantic import validator, Field
+from pydantic import Field, validator
 from pydantic_settings import BaseSettings
 
 
@@ -41,7 +41,7 @@ class Settings(BaseSettings):
     # Database
     database_url: str = "sqlite:///./exam_transcripts.db"
     test_database_url: str = "sqlite:///./test_exam_transcripts.db"
-    
+
     # PostgreSQL settings for production
     postgres_ssl_mode: str = "require"  # Can be disabled if needed
 
@@ -53,9 +53,9 @@ class Settings(BaseSettings):
     # CORS - Use a string field that we'll parse manually
     allowed_origins_str: str = Field(
         default="http://localhost:3000,http://localhost:8080,https://api-is-for-exam-transcripts.vercel.app,https://apis-for-exam-transcripts.vercel.app",
-        alias="ALLOWED_ORIGINS"
+        alias="ALLOWED_ORIGINS",
     )
-    
+
     # Additional CORS setting for production
     frontend_url: Optional[str] = None  # Can be set via environment variable
 
@@ -126,21 +126,27 @@ class Settings(BaseSettings):
     def cors_origins(self) -> List[str]:
         """Get all CORS origins including dynamically added ones."""
         # Parse allowed_origins_str into a list
-        origins = [origin.strip() for origin in self.allowed_origins_str.split(",") if origin.strip()]
-        
+        origins = [
+            origin.strip()
+            for origin in self.allowed_origins_str.split(",")
+            if origin.strip()
+        ]
+
         # Add frontend_url if provided
         if self.frontend_url and self.frontend_url not in origins:
             origins.append(self.frontend_url)
-        
+
         # In development, allow broader access for testing
         if self.is_development:
-            origins.extend([
-                "http://localhost:3000",
-                "http://127.0.0.1:3000",
-                "http://localhost:8080",
-                "http://127.0.0.1:8080"
-            ])
-        
+            origins.extend(
+                [
+                    "http://localhost:3000",
+                    "http://127.0.0.1:3000",
+                    "http://localhost:8080",
+                    "http://127.0.0.1:8080",
+                ]
+            )
+
         return list(set(origins))  # Remove duplicates
 
     class Config:

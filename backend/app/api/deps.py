@@ -5,16 +5,12 @@ This module contains FastAPI dependencies for dependency injection.
 Provides utilities for database sessions, authentication, and authorization.
 """
 
-
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
-from app.core.permissions import (
-    require_admin,
-    require_supervisor,
-    require_supervisor_or_admin,
-)
+from app.core.permissions import (require_admin, require_supervisor,
+                                  require_supervisor_or_admin)
 from app.core.security import verify_token
 from app.db.session import get_db
 from app.models.user import User

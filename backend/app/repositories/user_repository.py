@@ -5,7 +5,6 @@ This module contains the repository class for user-related database operations.
 Implements the repository pattern for data access abstraction.
 """
 
-
 from sqlalchemy.orm import Session
 
 from app.core.permissions import UserRole
@@ -53,12 +52,12 @@ class UserRepository:
 
         return user
 
-    async def get_by_id(self, user_id: int) -> User | None:
+    async def get_by_id(self, user_id: str) -> User | None:
         """
         Get user by ID.
 
         Args:
-            user_id: User's ID
+            user_id: User's ID (UUID string)
 
         Returns:
             User or None: User if found, None otherwise
@@ -100,7 +99,7 @@ class UserRepository:
 
     async def update(
         self,
-        user_id: int,
+        user_id: str,
         email: str | None = None,
         password: str | None = None,
         role: UserRole | None = None,
@@ -109,7 +108,7 @@ class UserRepository:
         Update user information.
 
         Args:
-            user_id: User's ID
+            user_id: User's ID (UUID string)
             email: New email address
             password: New password (will be hashed)
             role: New role
@@ -135,12 +134,12 @@ class UserRepository:
 
         return user
 
-    async def delete(self, user_id: int) -> bool:
+    async def delete(self, user_id: str) -> bool:
         """
         Delete user by ID.
 
         Args:
-            user_id: User's ID
+            user_id: User's ID (UUID string)
 
         Returns:
             bool: True if user was deleted, False if not found

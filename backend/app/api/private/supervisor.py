@@ -39,28 +39,27 @@ async def get_ungraded_assignments(
     ungraded_assignments = (
         db.query(UserExam)
         .filter(UserExam.vote.is_(None))
-        .options(
-            joinedload(UserExam.user),
-            joinedload(UserExam.exam)
-        )
+        .options(joinedload(UserExam.user), joinedload(UserExam.exam))
         .all()
     )
-    
+
     assignments_data = []
     for assignment in ungraded_assignments:
-        assignments_data.append({
-            "user_id": assignment.user_id,
-            "user_email": assignment.user.email,
-            "user_full_name": assignment.user.email,  # Use email as display name since no first/last name
-            "exam_id": assignment.exam_id,
-            "exam_title": assignment.exam.title,
-            "exam_date": assignment.exam.date.isoformat(),
-        })
-    
+        assignments_data.append(
+            {
+                "user_id": assignment.user_id,
+                "user_email": assignment.user.email,
+                "user_full_name": assignment.user.email,  # Use email as display name since no first/last name
+                "exam_id": assignment.exam_id,
+                "exam_title": assignment.exam.title,
+                "exam_date": assignment.exam.date.isoformat(),
+            }
+        )
+
     return {
         "success": True,
         "assignments": assignments_data,
-        "total": len(assignments_data)
+        "total": len(assignments_data),
     }
 
 
