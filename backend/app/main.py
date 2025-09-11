@@ -76,10 +76,14 @@ async def lifespan(app: FastAPI):
                 # Check database schema compatibility
                 inspector = inspect(db.bind)
                 
+                # Initialize schema compatibility flag
+                schema_compatible = True
+                
                 # Check if user table exists
                 tables = inspector.get_table_names()
                 if "user" not in tables:
                     logger.info("📋 User table not found - database will be initialized")
+                    schema_compatible = True
                 else:
                     # Check if user table uses UUID or integer IDs
                     columns = inspector.get_columns("user")
@@ -94,56 +98,89 @@ async def lifespan(app: FastAPI):
                         if "INTEGER" in column_type or "SERIAL" in column_type:
                             logger.warning("⚠️ Database schema mismatch detected!")
                             logger.warning("⚠️ Production database uses integer IDs but application expects UUIDs")
-                            logger.warning("⚠️ Please run the database migration script to update schema")
-                            logger.warning("⚠️ Skipping auto-user creation to prevent errors")
-                            # Continue to yield instead of returning
+                            
+                            # Check if database is empty - if so, recreate with correct schema
+                            try:
+                                user_count = db.execute(text('SELECT COUNT(*) FROM "user"')).scalar()
+                                if user_count == 0:
+                                    logger.info("🔄 Database is empty, recreating schema with UUID support...")
+                                    
+                                    # Drop existing tables and recreate with correct schema
+                                    db.execute(text('DROP TABLE IF EXISTS "user_exam" CASCADE'))
+                                    db.execute(text('DROP TABLE IF EXISTS "exam" CASCADE'))  
+                                    db.execute(text('DROP TABLE IF EXISTS "user" CASCADE'))
+                                    db.commit()
+                                    
+                                    # Force table recreation by calling create_tables again
+                                    from app.db.base import Base
+                                    Base.metadata.create_all(bind=db.bind)
+                                    
+                                    logger.info("✅ Schema recreated with UUID support!")
+                                    
+                                    # Now proceed with user creation
+                                    schema_compatible = True
+                                else:
+                                    logger.warning("⚠️ Database has existing data - manual migration required")
+                                    logger.warning("⚠️ Use the migration endpoint: POST /private/admin/migration/migrate-to-uuid")
+                                    logger.warning("⚠️ Skipping auto-user creation to prevent errors")
+                                    schema_compatible = False
+                                    
+                            except Exception as e:
+                                logger.error(f"Failed to check/fix database schema: {e}")
+                                schema_compatible = False
                         else:
                             logger.info(f"✅ Database schema compatible (ID type: {column_type})")
+                            schema_compatible = True
+                    else:
+                        logger.warning("⚠️ User table has no id column")
+                        schema_compatible = False
 
-                            # Check if users already exist
-                            existing_count = db.query(User).count()
+                # Only create users if schema is compatible
+                if schema_compatible:
+                    # Check if users already exist
+                    existing_count = db.query(User).count()
 
-                            if existing_count > 0:
-                                logger.info(
-                                    f"✅ Database already has {existing_count} users, skipping auto-creation"
-                                )
-                            else:
-                                # Create users
-                                users_to_create = [
-                                    ("admin@example.com", "admin123", UserRole.ADMIN),
-                                    (
-                                        "supervisor@example.com",
-                                        "supervisor123",
-                                        UserRole.SUPERVISOR,
-                                    ),
-                                    ("user@example.com", "user123", UserRole.USER),
-                                    ("john.doe@example.com", "password123", UserRole.USER),
-                                    ("jane.smith@example.com", "password123", UserRole.USER),
-                                ]
+                    if existing_count > 0:
+                        logger.info(
+                            f"✅ Database already has {existing_count} users, skipping auto-creation"
+                        )
+                    else:
+                        # Create users
+                        users_to_create = [
+                            ("admin@example.com", "admin123", UserRole.ADMIN),
+                            (
+                                "supervisor@example.com",
+                                "supervisor123",
+                                UserRole.SUPERVISOR,
+                            ),
+                            ("user@example.com", "user123", UserRole.USER),
+                            ("john.doe@example.com", "password123", UserRole.USER),
+                            ("jane.smith@example.com", "password123", UserRole.USER),
+                        ]
 
-                                logger.info(f"👥 Creating {len(users_to_create)} initial users...")
+                        logger.info(f"👥 Creating {len(users_to_create)} initial users...")
 
-                                for email, password, role in users_to_create:
-                                    hashed_password = hash_password(password)
-                                    user = User(
-                                        email=email, hashed_password=hashed_password, role=role
-                                    )
-                                    db.add(user)
-                                    logger.info(f"✅ Added user: {email} ({role.value})")
+                        for email, password, role in users_to_create:
+                            hashed_password = hash_password(password)
+                            user = User(
+                                email=email, hashed_password=hashed_password, role=role
+                            )
+                            db.add(user)
+                            logger.info(f"✅ Added user: {email} ({role.value})")
 
-                                db.commit()
+                        db.commit()
 
-                                final_count = db.query(User).count()
-                                logger.info(
-                                    f"🎉 Successfully created {final_count} users in production database!"
-                                )
+                        final_count = db.query(User).count()
+                        logger.info(
+                            f"🎉 Successfully created {final_count} users in production database!"
+                        )
 
-                                logger.info("📧 Login credentials available:")
-                                logger.info("👤 Admin: admin@example.com / admin123")
-                                logger.info("👤 Supervisor: supervisor@example.com / supervisor123")
-                                logger.info("👤 User: user@example.com / user123")
-                                logger.info("👤 User: john.doe@example.com / password123")
-                                logger.info("👤 User: jane.smith@example.com / password123")
+                        logger.info("📧 Login credentials available:")
+                        logger.info("👤 Admin: admin@example.com / admin123")
+                        logger.info("👤 Supervisor: supervisor@example.com / supervisor123")
+                        logger.info("👤 User: user@example.com / user123")
+                        logger.info("👤 User: john.doe@example.com / password123")
+                        logger.info("👤 User: jane.smith@example.com / password123")
 
             finally:
                 db.close()
