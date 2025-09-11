@@ -64,6 +64,7 @@ async def lifespan(app: FastAPI):
             from app.core.security import hash_password
             from app.db.session import get_db
             from app.models.user import User, UserRole
+            from sqlalchemy import text, inspect
 
             logger.info("🌱 Auto-creating initial users for production...")
 
@@ -72,6 +73,33 @@ async def lifespan(app: FastAPI):
             db = next(db_gen)
 
             try:
+                # Check database schema compatibility
+                inspector = inspect(db.bind)
+                
+                # Check if user table exists
+                tables = inspector.get_table_names()
+                if "user" not in tables:
+                    logger.info("📋 User table not found - database will be initialized")
+                else:
+                    # Check if user table uses UUID or integer IDs
+                    columns = inspector.get_columns("user")
+                    id_column = None
+                    for col in columns:
+                        if col["name"] == "id":
+                            id_column = col
+                            break
+                    
+                    if id_column:
+                        column_type = str(id_column["type"]).upper()
+                        if "INTEGER" in column_type or "SERIAL" in column_type:
+                            logger.warning("⚠️ Database schema mismatch detected!")
+                            logger.warning("⚠️ Production database uses integer IDs but application expects UUIDs")
+                            logger.warning("⚠️ Please run the database migration script to update schema")
+                            logger.warning("⚠️ Skipping auto-user creation to prevent errors")
+                            return
+                        else:
+                            logger.info(f"✅ Database schema compatible (ID type: {column_type})")
+
                 # Check if users already exist
                 existing_count = db.query(User).count()
 

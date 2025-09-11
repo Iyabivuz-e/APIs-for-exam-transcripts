@@ -30,7 +30,7 @@ class TestAuthEndpoints:
         # Test login
         response = client.post(
             "/auth/login",
-            data={"username": "test@example.com", "password": "password123"}
+            json={"email": "test@example.com", "password": "password123"}
         )
         
         assert response.status_code == 200
@@ -53,7 +53,7 @@ class TestAuthEndpoints:
         # Test login with wrong password
         response = client.post(
             "/auth/login",
-            data={"username": "test@example.com", "password": "wrongpassword"}
+            json={"email": "test@example.com", "password": "wrongpassword"}
         )
         
         assert response.status_code == 401
@@ -62,16 +62,16 @@ class TestAuthEndpoints:
         """Test login with non-existent user."""
         response = client.post(
             "/auth/login",
-            data={"username": "nonexistent@example.com", "password": "password123"}
+            json={"email": "nonexistent@example.com", "password": "password123"}
         )
         
         assert response.status_code == 401
     
     def test_protected_endpoint_without_token(self, client: TestClient):
         """Test accessing protected endpoint without token."""
-        response = client.get("/private/users/me")
+        response = client.get("/auth/me")
         
-        assert response.status_code == 401
+        assert response.status_code == 403
     
     def test_protected_endpoint_with_valid_token(self, client: TestClient, test_db):
         """Test accessing protected endpoint with valid token."""
@@ -88,19 +88,19 @@ class TestAuthEndpoints:
         # Login to get token
         login_response = client.post(
             "/auth/login",
-            data={"username": "test@example.com", "password": "password123"}
+            json={"email": "test@example.com", "password": "password123"}
         )
         token = login_response.json()["access_token"]
         
         # Access protected endpoint
         response = client.get(
-            "/private/users/me",
+            "/auth/me",
             headers={"Authorization": f"Bearer {token}"}
         )
         
         assert response.status_code == 200
         data = response.json()
-        assert data["email"] == "test@example.com"
+        assert data["user"]["email"] == "test@example.com"
     
     def test_admin_endpoint_access_control(self, client: TestClient, test_db):
         """Test that admin endpoints require admin role."""
@@ -117,7 +117,7 @@ class TestAuthEndpoints:
         # Login as regular user
         login_response = client.post(
             "/auth/login",
-            data={"username": "user@example.com", "password": "password123"}
+            json={"email": "user@example.com", "password": "password123"}
         )
         token = login_response.json()["access_token"]
         

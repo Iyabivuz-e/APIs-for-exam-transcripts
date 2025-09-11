@@ -50,6 +50,27 @@ def test_db():
 
 
 @pytest.fixture(scope="function")
+def db_session():
+    """Alias for test_db to match test expectations."""
+    # Create test engine
+    engine = create_engine(TEST_DATABASE_URL, connect_args={"check_same_thread": False})
+    
+    # Create all tables
+    Base.metadata.create_all(bind=engine)
+    
+    # Create session
+    TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    
+    try:
+        db = TestingSessionLocal()
+        yield db
+    finally:
+        db.close()
+        # Drop all tables
+        Base.metadata.drop_all(bind=engine)
+
+
+@pytest.fixture(scope="function")
 def client(test_db):
     """Create a test client with test database."""
     def override_get_db():

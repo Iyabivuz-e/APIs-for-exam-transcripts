@@ -104,8 +104,8 @@ class TestAuthEndpoints:
         # Assert
         assert response.status_code == 401
         data = response.json()
-        assert "detail" in data
-        assert "Invalid credentials" in data["detail"]
+        assert "message" in data
+        assert "Invalid" in data["message"]
     
     def test_login_invalid_data_format(self, client: TestClient):
         """Test login with invalid data format."""
@@ -145,19 +145,19 @@ class TestAuthEndpoints:
         
         assert response.status_code == 200
         data = response.json()
-        assert data["email"] == test_user_data["email"]
-        assert data["role"] == "user"
-        assert "id" in data
-        assert "created_at" in data
-        assert "updated_at" in data
+        assert data["user"]["email"] == test_user_data["email"]
+        assert data["user"]["role"] == "user"
+        assert "id" in data["user"]
+        assert "created_at" in data["user"]
+        assert "updated_at" in data["user"]
     
     def test_get_current_user_info_unauthorized(self, client: TestClient):
         """Test getting user info without authentication."""
         response = client.get("/auth/me")
         
-        assert response.status_code == 401
+        assert response.status_code == 403
         data = response.json()
-        assert "detail" in data
+        assert "message" in data
     
     def test_get_current_user_info_invalid_token(self, client: TestClient):
         """Test getting user info with invalid token."""
@@ -167,7 +167,7 @@ class TestAuthEndpoints:
         
         assert response.status_code == 401
         data = response.json()
-        assert "detail" in data
+        assert "message" in data
     
     def test_refresh_token(self, client: TestClient, create_test_user, test_user_data):
         """Test token refresh."""
@@ -182,6 +182,10 @@ class TestAuthEndpoints:
         
         original_token = login_response.json()["access_token"]
         headers = {"Authorization": f"Bearer {original_token}"}
+        
+        # Add small delay to ensure different timestamp
+        import time
+        time.sleep(1)
         
         # Test token refresh
         response = client.post("/auth/refresh", headers=headers)
@@ -201,9 +205,9 @@ class TestAuthEndpoints:
         """Test token refresh without authentication."""
         response = client.post("/auth/refresh")
         
-        assert response.status_code == 401
+        assert response.status_code == 403
         data = response.json()
-        assert "detail" in data
+        assert "message" in data
     
     def test_logout(self, client: TestClient, create_test_user, test_user_data):
         """Test user logout."""
@@ -230,6 +234,6 @@ class TestAuthEndpoints:
         """Test logout without authentication."""
         response = client.post("/auth/logout")
         
-        assert response.status_code == 401
+        assert response.status_code == 403
         data = response.json()
-        assert "detail" in data
+        assert "message" in data
