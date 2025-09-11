@@ -65,15 +65,35 @@ async def create_seed_users(force: bool = False, production_mode: bool = False):
         
         # Define user data based on environment
         if production_mode:
-            # Production: Only create essential admin user
+            # Production: Create same users as development for easier testing
             users_to_create = [
                 {
-                    "email": "admin@company.com",  # Change this to your actual admin email
-                    "password": "change-this-password-immediately",  # Must be changed after first login
+                    "email": "admin@example.com",
+                    "password": "admin123",
                     "role": UserRole.ADMIN
+                },
+                {
+                    "email": "supervisor@example.com", 
+                    "password": "supervisor123",
+                    "role": UserRole.SUPERVISOR
+                },
+                {
+                    "email": "user@example.com",
+                    "password": "user123", 
+                    "role": UserRole.USER
+                },
+                {
+                    "email": "john.doe@example.com",
+                    "password": "password123",
+                    "role": UserRole.USER
+                },
+                {
+                    "email": "jane.smith@example.com",
+                    "password": "password123",
+                    "role": UserRole.USER
                 }
             ]
-            logger.warning("🚨 Creating production admin user with default password - CHANGE IMMEDIATELY!")
+            logger.info("🚨 Creating production users with development credentials for testing")
         else:
             # Development: Create test users
             users_to_create = [
@@ -125,20 +145,22 @@ async def create_seed_users(force: bool = False, production_mode: bool = False):
         
         logger.info(f"🎉 Successfully created {len(created_users)} users")
         
+        # Show credentials for testing (in both development and production)
+        logger.info("Created users:")
+        for user_data in created_users:
+            logger.info(f"📧 Email: {user_data['email']}")
+            logger.info(f"🔑 Password: {user_data['password']}")
+            logger.info(f"👤 Role: {user_data['role'].value}")
+            logger.info("-" * 40)
+        
         if not production_mode:
-            # Only show credentials in development
-            logger.info("Created users:")
-            for user_data in created_users:
-                logger.info(f"📧 Email: {user_data['email']}")
-                logger.info(f"🔑 Password: {user_data['password']}")
-                logger.info(f"👤 Role: {user_data['role'].value}")
-                logger.info("-" * 40)
-            
             logger.info("\n✨ You can now login to the React app with any of these credentials!")
             logger.info("🌐 Frontend: http://localhost:3000")
             logger.info("📚 API Docs: http://localhost:8000/docs")
         else:
-            logger.warning("🔐 Production admin user created. Please change the password immediately!")
+            logger.info("\n✨ You can now login to your production app with these credentials!")
+            logger.info("🌐 Frontend: https://api-is-for-exam-transcripts.vercel.app")
+            logger.info("📚 API Backend: https://apis-for-exam-transcripts.onrender.com")
             
         return True
         
@@ -174,6 +196,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-if __name__ == "__main__":
-    print("🌱 Seeding database with initial users...")
-    asyncio.run(create_seed_users())
