@@ -1,0 +1,4 @@
+backend/
+*.md
+!frontend/
+.git/
