@@ -33,6 +33,21 @@ docker-compose exec api python seed_users.py --production
 ### 4. Verify Deployment
 - Health check: `curl http://localhost:8000/health`
 - API status: `curl http://localhost:8000/`
+- Run tests: `./run_tests.sh`
+
+## 🧪 Testing
+
+```bash
+# Run all tests
+./run_tests.sh
+
+# Run specific test types
+pytest tests/unit/ -v      # Unit tests only
+pytest tests/integration/ -v  # Integration tests only
+
+# Run with coverage
+pytest tests/ --cov=app --cov-report=html
+```
 
 ## 📖 Full Documentation
 

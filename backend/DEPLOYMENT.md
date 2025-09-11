@@ -66,8 +66,30 @@ Install production dependencies:
 uv sync --no-dev
 
 # Or using pip
-pip install -r requirements.txt --no-dev
+pip install -r requirements.txt
+
+# For development (includes testing)
+pip install -r requirements.txt  # All dependencies including pytest
 ```
+
+### 4.1. Testing
+
+Run tests before deployment to ensure everything works:
+```bash
+# Quick test run
+./run_tests.sh
+
+# Or manually with pytest
+pytest tests/ -v
+
+# With coverage report
+pytest tests/ --cov=app --cov-report=html
+```
+
+**Test Structure:**
+- `tests/unit/` - Unit tests for individual components
+- `tests/integration/` - Integration tests for API endpoints
+- `tests/conftest.py` - Test configuration and fixtures
 
 ### 5. Process Management
 

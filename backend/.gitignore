@@ -99,10 +99,7 @@ test_*.db
 *.temp
 
 # Development files (not needed for production)
-scripts/
-tests/
-test_*
-*_test.py
+scripts/dev_*
 .env.example
 README_backend.md
 Dockerfile.complex
