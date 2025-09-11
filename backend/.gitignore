@@ -1,3 +1,10 @@
+# Database files (prevent local SQLite files from being committed)
+*.db
+*.sqlite
+*.sqlite3
+exam_transcripts.db
+test_exam_transcripts.db
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
