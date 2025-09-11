@@ -41,6 +41,9 @@ class Settings(BaseSettings):
     # Database
     database_url: str = "sqlite:///./exam_transcripts.db"
     test_database_url: str = "sqlite:///./test_exam_transcripts.db"
+    
+    # PostgreSQL settings for production
+    postgres_ssl_mode: str = "require"  # Can be disabled if needed
 
     # Security
     secret_key: str = "your-super-secret-key-change-this-in-production"
@@ -107,6 +110,17 @@ class Settings(BaseSettings):
     def is_development(self) -> bool:
         """Check if environment is development."""
         return self.environment == "development"
+
+    @property
+    def database_connection_url(self) -> str:
+        """Get the proper database URL with SSL configuration for production."""
+        # If using PostgreSQL in production, add SSL configuration
+        if self.database_url.startswith("postgresql"):
+            # Check if SSL mode is already in the URL
+            if "sslmode=" not in self.database_url:
+                separator = "&" if "?" in self.database_url else "?"
+                return f"{self.database_url}{separator}sslmode={self.postgres_ssl_mode}"
+        return self.database_url
 
     @property
     def cors_origins(self) -> List[str]:

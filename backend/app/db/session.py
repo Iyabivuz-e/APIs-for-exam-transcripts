@@ -42,7 +42,7 @@ class DatabaseManager:
         database_url = (
             self.settings.test_database_url
             if self.settings.environment == "test"
-            else self.settings.database_url
+            else self.settings.database_connection_url  # Use the property with SSL config
         )
 
         # Create engine with appropriate settings
@@ -54,9 +54,21 @@ class DatabaseManager:
                 echo=self.settings.environment == "development",
             )
         else:
-            # PostgreSQL settings
+            # PostgreSQL settings with SSL and connection pooling
+            connect_args = {}
+            if self.settings.is_production:
+                # Production PostgreSQL settings
+                connect_args.update({
+                    "sslmode": self.settings.postgres_ssl_mode,
+                    "connect_timeout": 30,
+                })
+            
             self.engine = create_engine(
-                database_url, echo=self.settings.environment == "development"
+                database_url, 
+                echo=self.settings.environment == "development",
+                connect_args=connect_args,
+                pool_pre_ping=True,  # Validate connections before use
+                pool_recycle=300,    # Recycle connections every 5 minutes
             )
 
         # Create session factory
