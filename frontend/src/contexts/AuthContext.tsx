@@ -89,14 +89,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Check for existing authentication on mount
   useEffect(() => {
     const checkAuth = async () => {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('auth_token'); // Fixed: Use same key as api.ts
       
       if (token) {
         try {
+          // Set token in api client first
+          apiClient.setToken(token);
           const user = await apiClient.getCurrentUser();
           dispatch({ type: 'LOGIN_SUCCESS', payload: user });
         } catch (error) {
-          localStorage.removeItem('token');
+          // Clear invalid token
+          localStorage.removeItem('auth_token');
+          apiClient.setToken(null);
           dispatch({ type: 'SET_LOADING', payload: false });
         }
       } else {
