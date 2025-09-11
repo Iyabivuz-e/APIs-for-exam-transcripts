@@ -9,7 +9,7 @@ import logging
 from functools import lru_cache
 from typing import List, Union, Optional
 
-from pydantic import validator
+from pydantic import validator, Field
 from pydantic_settings import BaseSettings
 
 
@@ -47,16 +47,11 @@ class Settings(BaseSettings):
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
 
-    # CORS
-    allowed_origins: List[str] = [
-        "http://localhost:3000", 
-        "http://localhost:8080", 
-        "https://api-is-for-exam-transcripts.vercel.app",  # Your actual frontend
-        "https://apis-for-exam-transcripts.vercel.app",
-        # Development and preview URLs
-        "https://apis-for-exam-transcripts-frontend.vercel.app",
-        "https://exam-transcripts-frontend.vercel.app"
-    ]
+    # CORS - Use a string field that we'll parse manually
+    allowed_origins_str: str = Field(
+        default="http://localhost:3000,http://localhost:8080,https://api-is-for-exam-transcripts.vercel.app,https://apis-for-exam-transcripts.vercel.app",
+        alias="ALLOWED_ORIGINS"
+    )
     
     # Additional CORS setting for production
     frontend_url: Optional[str] = None  # Can be set via environment variable
@@ -116,7 +111,10 @@ class Settings(BaseSettings):
     @property
     def cors_origins(self) -> List[str]:
         """Get all CORS origins including dynamically added ones."""
-        origins = self.allowed_origins.copy()
+        # Parse allowed_origins_str into a list
+        origins = [origin.strip() for origin in self.allowed_origins_str.split(",") if origin.strip()]
+        
+        # Add frontend_url if provided
         if self.frontend_url and self.frontend_url not in origins:
             origins.append(self.frontend_url)
         
@@ -136,6 +134,8 @@ class Settings(BaseSettings):
 
         env_file = ".env"
         env_file_encoding = "utf-8"
+        # Allow field aliases from environment variables
+        populate_by_name = True
 
 
 @lru_cache

@@ -1,28 +1,27 @@
 # CORS Configuration Fix Guide
 
+## Your Actual Domains
+- **Frontend**: https://api-is-for-exam-transcripts.vercel.app
+- **Backend**: https://apis-for-exam-transcripts.onrender.com
+
 ## Problem
 You're getting CORS errors when connecting your frontend to the backend deployed on Render.
 
-## Root Causes
-1. **Frontend API URL mismatch**: Your `.env.production` had a placeholder URL
-2. **Missing frontend domain**: Your backend doesn't know about your actual frontend domain
-3. **CORS configuration**: May need additional headers for Render
+## Fixes Applied ✅
 
-## Fixes Applied
-
-### 1. Frontend Configuration
+### 1. Frontend Configuration ✅
 Updated `/frontend/.env.production`:
 ```bash
 REACT_APP_API_URL=https://apis-for-exam-transcripts.onrender.com
 ```
 
-### 2. Backend CORS Configuration
+### 2. Backend CORS Configuration ✅
 Enhanced `/backend/app/config/settings.py`:
+- Added your actual frontend domain: `https://api-is-for-exam-transcripts.vercel.app`
 - Added dynamic CORS origins support
 - Added `frontend_url` environment variable support
-- Improved CORS origins property
 
-### 3. FastAPI CORS Middleware
+### 3. FastAPI CORS Middleware ✅
 Updated `/backend/app/main.py`:
 - Added explicit HTTP methods
 - Added `expose_headers` for better compatibility
@@ -30,60 +29,60 @@ Updated `/backend/app/main.py`:
 
 ## Deployment Steps
 
-### For Render Backend:
-1. Add these environment variables in Render dashboard:
+### For Render Backend (CRITICAL):
+1. **Add these environment variables in your Render dashboard**:
    ```
    ENVIRONMENT=production
    SECRET_KEY=your-production-secret-key-here
-   FRONTEND_URL=https://your-frontend-domain.vercel.app
+   FRONTEND_URL=https://api-is-for-exam-transcripts.vercel.app
    LOG_LEVEL=INFO
    ENABLE_DOCS=false
    ```
 
-2. If using PostgreSQL on Render:
+2. **If using PostgreSQL on Render**:
    ```
    DATABASE_URL=postgresql://username:password@hostname:port/database
    ```
 
+3. **Redeploy your backend** after adding these environment variables
+
 ### For Vercel Frontend:
-1. Ensure your build is using the production environment
-2. Make sure `REACT_APP_API_URL` is set to your Render backend URL
+1. ✅ Environment is already configured correctly
+2. **Redeploy your frontend** to pick up the new environment variables
 
-## Testing
-1. Deploy backend to Render with new environment variables
-2. Deploy frontend to Vercel with updated `.env.production`
-3. Test the connection
+## Testing Steps
+1. ✅ CORS configuration is tested and working locally
+2. Deploy backend to Render with new environment variables
+3. Deploy frontend to Vercel (should already be correct)
+4. Test the connection from: https://api-is-for-exam-transcripts.vercel.app
 
-## Additional CORS Troubleshooting
+## If Still Having Issues
 
-If you still have issues, you can temporarily add your exact frontend domain:
+### Quick Debug:
+1. Open browser dev tools on your frontend
+2. Check if the API calls are going to the correct URL
+3. Look at the Network tab for CORS error details
 
-1. Find your exact frontend URL from Vercel
-2. Add it to `allowed_origins` in `settings.py`:
-   ```python
-   allowed_origins: List[str] = [
-       # ... existing origins ...
-       "https://your-exact-frontend-url.vercel.app"
-   ]
-   ```
+### Temporary Fix (NOT for production):
+If you need immediate testing, you can temporarily set in `main.py`:
+```python
+allow_origins=["*"]  # REMOVE THIS AFTER TESTING
+```
 
 ## Environment Variables Reference
 
-### Backend (.env.render):
+### Backend (.env.render) - Use these in Render dashboard:
 ```bash
 ENVIRONMENT=production
 SECRET_KEY=your-production-secret-key-change-this
 DATABASE_URL=postgresql://username:password@hostname:port/database
-FRONTEND_URL=https://your-frontend-domain.vercel.app
+FRONTEND_URL=https://api-is-for-exam-transcripts.vercel.app
 LOG_LEVEL=INFO
 ENABLE_DOCS=false
 ```
 
-### Frontend (.env.production):
+### Frontend (.env.production) - Already configured:
 ```bash
 GENERATE_SOURCEMAP=false
 REACT_APP_API_URL=https://apis-for-exam-transcripts.onrender.com
 ```
-
-## Quick Fix
-If you need an immediate fix, temporarily set `allow_origins=["*"]` in main.py, but **DO NOT** use this in production for security reasons.
