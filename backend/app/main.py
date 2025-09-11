@@ -96,54 +96,54 @@ async def lifespan(app: FastAPI):
                             logger.warning("⚠️ Production database uses integer IDs but application expects UUIDs")
                             logger.warning("⚠️ Please run the database migration script to update schema")
                             logger.warning("⚠️ Skipping auto-user creation to prevent errors")
-                            return
+                            # Continue to yield instead of returning
                         else:
                             logger.info(f"✅ Database schema compatible (ID type: {column_type})")
 
-                # Check if users already exist
-                existing_count = db.query(User).count()
+                            # Check if users already exist
+                            existing_count = db.query(User).count()
 
-                if existing_count > 0:
-                    logger.info(
-                        f"✅ Database already has {existing_count} users, skipping auto-creation"
-                    )
-                else:
-                    # Create users
-                    users_to_create = [
-                        ("admin@example.com", "admin123", UserRole.ADMIN),
-                        (
-                            "supervisor@example.com",
-                            "supervisor123",
-                            UserRole.SUPERVISOR,
-                        ),
-                        ("user@example.com", "user123", UserRole.USER),
-                        ("john.doe@example.com", "password123", UserRole.USER),
-                        ("jane.smith@example.com", "password123", UserRole.USER),
-                    ]
+                            if existing_count > 0:
+                                logger.info(
+                                    f"✅ Database already has {existing_count} users, skipping auto-creation"
+                                )
+                            else:
+                                # Create users
+                                users_to_create = [
+                                    ("admin@example.com", "admin123", UserRole.ADMIN),
+                                    (
+                                        "supervisor@example.com",
+                                        "supervisor123",
+                                        UserRole.SUPERVISOR,
+                                    ),
+                                    ("user@example.com", "user123", UserRole.USER),
+                                    ("john.doe@example.com", "password123", UserRole.USER),
+                                    ("jane.smith@example.com", "password123", UserRole.USER),
+                                ]
 
-                    logger.info(f"👥 Creating {len(users_to_create)} initial users...")
+                                logger.info(f"👥 Creating {len(users_to_create)} initial users...")
 
-                    for email, password, role in users_to_create:
-                        hashed_password = hash_password(password)
-                        user = User(
-                            email=email, hashed_password=hashed_password, role=role
-                        )
-                        db.add(user)
-                        logger.info(f"✅ Added user: {email} ({role.value})")
+                                for email, password, role in users_to_create:
+                                    hashed_password = hash_password(password)
+                                    user = User(
+                                        email=email, hashed_password=hashed_password, role=role
+                                    )
+                                    db.add(user)
+                                    logger.info(f"✅ Added user: {email} ({role.value})")
 
-                    db.commit()
+                                db.commit()
 
-                    final_count = db.query(User).count()
-                    logger.info(
-                        f"🎉 Successfully created {final_count} users in production database!"
-                    )
+                                final_count = db.query(User).count()
+                                logger.info(
+                                    f"🎉 Successfully created {final_count} users in production database!"
+                                )
 
-                    logger.info("📧 Login credentials available:")
-                    logger.info("👤 Admin: admin@example.com / admin123")
-                    logger.info("👤 Supervisor: supervisor@example.com / supervisor123")
-                    logger.info("👤 User: user@example.com / user123")
-                    logger.info("👤 User: john.doe@example.com / password123")
-                    logger.info("👤 User: jane.smith@example.com / password123")
+                                logger.info("📧 Login credentials available:")
+                                logger.info("👤 Admin: admin@example.com / admin123")
+                                logger.info("👤 Supervisor: supervisor@example.com / supervisor123")
+                                logger.info("👤 User: user@example.com / user123")
+                                logger.info("👤 User: john.doe@example.com / password123")
+                                logger.info("👤 User: jane.smith@example.com / password123")
 
             finally:
                 db.close()
@@ -197,6 +197,12 @@ def create_application() -> FastAPI:
     app.include_router(admin.router, prefix="/private/admin", tags=["Admin"])
     app.include_router(
         supervisor.router, prefix="/private/supervisor", tags=["Supervisor"]
+    )
+    
+    # Include migration endpoints
+    from app.api.admin import migration as migration_routes
+    app.include_router(
+        migration_routes.router, prefix="/private/admin/migration", tags=["Migration"]
     )
 
     @app.get("/health", tags=["Health"])
