@@ -8,7 +8,7 @@
  * - User: View available exams + register for exams + view "my exams"
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Card, Button } from '../components/ui';
 import { CreateExamModal } from '../components/CreateExamModal';
@@ -32,7 +32,27 @@ export function Dashboard() {
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
   const [selectedUserEmail, setSelectedUserEmail] = useState<string>('');
 
-  const loadData = async () => {
+  const checkUsersWithExams = useCallback(async (users: User[]) => {
+    try {
+      const usersWithExamsSet = new Set<number>();
+      
+      // Check each user to see if they have ungraded exams
+      await Promise.all(
+        users.map(async (userData) => {
+          const hasExams = await apiClient.checkUserHasUngradedExams(userData.id);
+          if (hasExams) {
+            usersWithExamsSet.add(userData.id);
+          }
+        })
+      );
+      
+      setUsersWithExams(usersWithExamsSet);
+    } catch (error) {
+      console.error('Error checking users with exams:', error);
+    }
+  }, []);
+
+  const loadData = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
@@ -61,31 +81,11 @@ export function Dashboard() {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const checkUsersWithExams = async (users: User[]) => {
-    try {
-      const usersWithExamsSet = new Set<number>();
-      
-      // Check each user to see if they have ungraded exams
-      await Promise.all(
-        users.map(async (userData) => {
-          const hasExams = await apiClient.checkUserHasUngradedExams(userData.id);
-          if (hasExams) {
-            usersWithExamsSet.add(userData.id);
-          }
-        })
-      );
-      
-      setUsersWithExams(usersWithExamsSet);
-    } catch (error) {
-      console.error('Error checking users with exams:', error);
-    }
-  };
+  }, [user?.role, checkUsersWithExams]);
 
   useEffect(() => {
     loadData();
-  }, [user]);
+  }, [user, loadData]);
 
   const handleRegisterForExam = async (examId: number) => {
     try {

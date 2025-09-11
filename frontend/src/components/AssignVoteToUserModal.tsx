@@ -4,7 +4,7 @@
  * Modal for supervisors to assign votes to a specific user's exams
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Button, Input, Card } from './ui';
 import { apiClient } from '../services/api';
 
@@ -38,14 +38,7 @@ export function AssignVoteToUserModal({
   const [error, setError] = useState<string | null>(null);
   const [isLoadingData, setIsLoadingData] = useState(true);
 
-  // Load user's ungraded exams when modal opens
-  useEffect(() => {
-    if (isOpen && userId) {
-      loadUserExams();
-    }
-  }, [isOpen, userId]);
-
-  const loadUserExams = async () => {
+  const loadUserExams = useCallback(async () => {
     try {
       setIsLoadingData(true);
       setError(null);
@@ -64,7 +57,14 @@ export function AssignVoteToUserModal({
     } finally {
       setIsLoadingData(false);
     }
-  };
+  }, [userId, userEmail]);
+
+  // Load user's ungraded exams when modal opens
+  useEffect(() => {
+    if (isOpen && userId) {
+      loadUserExams();
+    }
+  }, [isOpen, userId, loadUserExams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

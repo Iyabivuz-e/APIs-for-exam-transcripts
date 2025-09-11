@@ -5,9 +5,8 @@
  */
 
 import React, { useState } from 'react';
-import { Button, Input, Card } from './ui';
+import { Button, Input } from './ui';
 import { apiClient } from '../services/api';
-import { CreateExamData } from '../types';
 
 interface CreateExamModalProps {
   isOpen: boolean;

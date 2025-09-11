@@ -5,7 +5,7 @@
  * Senior pattern: Centralized API logic with error handling
  */
 
-import { LoginRequest, TokenResponse, User, Exam, UserExam, CreateExamData, VoteAssignment } from '../types';
+import { LoginRequest, TokenResponse, User, Exam, UserExam, CreateExamData } from '../types';
 
 // Base configuration
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
