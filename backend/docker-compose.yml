@@ -1,30 +1,97 @@
+# Docker Compose for Exam Transcripts API
+# Supports both development and production environments
+
 version: '3.8'
 
 services:
+  # FastAPI application
   api:
-    build: .
+    build: 
+      context: .
+      target: production
     ports:
-      - "8000:8000"
+      - "${PORT:-8000}:8000"
     environment:
-      - ENVIRONMENT=development
-      - DATABASE_URL=sqlite:///./exam_transcripts.db
-      - SECRET_KEY=dev-secret-key-change-in-production
-    volumes:
-      - ./app:/app/app
-      - ./exam_transcripts.db:/app/exam_transcripts.db
+      - ENVIRONMENT=${ENVIRONMENT:-production}
+      - DATABASE_URL=${DATABASE_URL:-postgresql://postgres:password@db:5432/exam_transcripts}
+      - SECRET_KEY=${SECRET_KEY}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-["http://localhost:3000"]}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - ENABLE_DOCS=${ENABLE_DOCS:-false}
+    depends_on:
+      db:
+        condition: service_healthy
     restart: unless-stopped
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
-  # Optional: PostgreSQL database
-  # postgres:
-  #   image: postgres:15
-  #   environment:
-  #     POSTGRES_DB: exam_transcripts
-  #     POSTGRES_USER: postgres
-  #     POSTGRES_PASSWORD: password
-  #   ports:
-  #     - "5432:5432"
-  #   volumes:
-  #     - postgres_data:/var/lib/postgresql/data
+  # PostgreSQL database (production-ready)
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-exam_transcripts}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-exam_transcripts}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-# volumes:
-#   postgres_data:
+  # Redis for caching and session management (optional)
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Nginx reverse proxy (production)
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/ssl/certs:ro  # SSL certificates
+    depends_on:
+      - api
+    restart: unless-stopped
+    networks:
+      - app-network
+    profiles:
+      - production
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  app-network:
+    driver: bridge

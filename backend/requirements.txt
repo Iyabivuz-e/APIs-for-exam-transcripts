@@ -1,0 +1,23 @@
+# Production requirements for Exam Transcripts API
+# Generated from pyproject.toml dependencies
+
+# Core FastAPI and server
+fastapi>=0.116.1
+uvicorn[standard]>=0.35.0
+python-multipart>=0.0.20
+
+# Database
+sqlalchemy>=2.0.43
+psycopg2-binary>=2.9.10  # PostgreSQL adapter
+alembic>=1.16.5  # Database migrations
+
+# Authentication & Security
+python-jose[cryptography]>=3.5.0
+bcrypt>=4.3.0
+
+# Validation & Settings
+pydantic-settings>=2.10.1
+email-validator>=2.3.0
+
+# HTTP Client (for external API calls if needed)
+httpx>=0.28.1

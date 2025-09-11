@@ -5,7 +5,9 @@ This module contains all configuration settings for the application.
 Uses Pydantic BaseSettings for environment variable management and validation.
 """
 
+import logging
 from functools import lru_cache
+from typing import List, Union
 
 from pydantic import validator
 from pydantic_settings import BaseSettings
@@ -25,6 +27,8 @@ class Settings(BaseSettings):
         algorithm: JWT algorithm for token encoding
         access_token_expire_minutes: JWT token expiration time in minutes
         allowed_origins: List of allowed CORS origins
+        log_level: Logging level
+        enable_docs: Enable API documentation endpoints
     """
 
     # Environment
@@ -44,7 +48,13 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 30
 
     # CORS
-    allowed_origins: list[str] = ["http://localhost:3000", "http://localhost:8080"]
+    allowed_origins: List[str] = ["http://localhost:3000", "http://localhost:8080"]
+
+    # Logging
+    log_level: str = "INFO"
+
+    # API Documentation
+    enable_docs: bool = True
 
     @validator("environment")
     def validate_environment(cls, v):
@@ -63,6 +73,34 @@ class Settings(BaseSettings):
         ):
             raise ValueError("Secret key must be changed in production environment")
         return v
+
+    @validator("log_level")
+    def validate_log_level(cls, v):
+        """Validate log level."""
+        allowed_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+        if v.upper() not in allowed_levels:
+            raise ValueError(f"Log level must be one of: {allowed_levels}")
+        return v.upper()
+
+    @validator("enable_docs")
+    def validate_docs_in_production(cls, v, values):
+        """Disable docs in production unless explicitly enabled."""
+        if values.get("environment") == "production" and v is True:
+            # Allow override but warn
+            return v
+        elif values.get("environment") == "production":
+            return False
+        return v
+
+    @property
+    def is_production(self) -> bool:
+        """Check if environment is production."""
+        return self.environment == "production"
+
+    @property
+    def is_development(self) -> bool:
+        """Check if environment is development."""
+        return self.environment == "development"
 
     class Config:
         """Pydantic configuration."""

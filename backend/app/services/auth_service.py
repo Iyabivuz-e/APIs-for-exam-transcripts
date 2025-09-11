@@ -125,6 +125,6 @@ class AuthService:
         Returns:
             bool: True if logout successful
         """
-        # TODO: Implement token blacklisting if needed
-        # For now, logout is handled client-side by discarding the token
+        # Current implementation relies on client-side token disposal
+        # Future enhancement: Implement Redis-based token blacklisting for enhanced security
         return True
