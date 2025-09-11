@@ -48,6 +48,13 @@ async def lifespan(app: FastAPI):
     settings = get_settings()
     logger.info(f"Starting Exam Transcripts API in {settings.environment} mode")
     
+    # Auto-create users if needed (for free tier Render)
+    try:
+        from auto_seed_users import auto_create_users_if_needed
+        await auto_create_users_if_needed()
+    except Exception as e:
+        logger.warning(f"Auto user creation failed: {e}")
+    
     yield
     
     # Shutdown
