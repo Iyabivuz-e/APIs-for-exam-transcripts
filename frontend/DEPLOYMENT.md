@@ -51,16 +51,17 @@ This project uses a monorepo structure with separate `backend/` and `frontend/` 
 **Root Cause**: Vercel was looking for the frontend files in the wrong directory due to the monorepo structure.
 
 **Solution Applied**:
-1. Created root-level `vercel.json` to configure monorepo deployment
-2. Added `vercel-build` script to `package.json`
-3. Created `.vercelignore` to exclude backend files
-4. Updated deployment documentation for monorepo structure
+1. Updated root-level `vercel.json` with simplified monorepo configuration
+2. Used `buildCommand`, `outputDirectory`, and `installCommand` directives
+3. Removed frontend-specific `vercel.json` to avoid conflicts
+4. Added SPA routing and caching headers
+5. Created `.vercelignore` to exclude backend files
 
 **Files Modified**:
-- `/vercel.json` (new) - Vercel monorepo configuration
-- `/frontend/package.json` - Added vercel-build script
-- `/.vercelignore` (new) - Exclude backend from deployment
-- `/frontend/DEPLOYMENT.md` - Updated deployment instructions
+- `/vercel.json` - Simplified Vercel monorepo configuration
+- `/frontend/package.json` - Added vercel-build script (backup)
+- `/.vercelignore` - Exclude backend from deployment
+- `/frontend/vercel.json` - Removed (no longer needed)
 
 ### Monorepo Configuration Files
 
