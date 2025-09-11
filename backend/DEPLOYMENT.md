@@ -41,6 +41,23 @@ alembic upgrade head
 python seed_users.py --production
 ```
 
+### 🔧 Recent Fix Applied
+
+**Issue**: Docker build was failing with "OSError: Readme file does not exist: README.md"
+
+**Root Cause**: The `pyproject.toml` file referenced a README.md file that wasn't present during the Docker build process.
+
+**Solution Applied**:
+1. Removed `readme = "README.md"` from pyproject.toml to avoid build dependency
+2. Simplified Dockerfile to use `requirements.txt` instead of UV/pyproject.toml for more reliable builds
+3. Added proper PostgreSQL development libraries for psycopg2-binary
+4. Maintained multi-stage build for production optimization
+
+**Files Modified**:
+- `pyproject.toml` - Removed readme reference
+- `Dockerfile` - Simplified build process using pip and requirements.txt
+- `Dockerfile.complex` - Kept original multi-stage UV build as alternative
+
 ### 4. Production Dependencies
 
 Install production dependencies:
@@ -75,18 +92,37 @@ Restart=always
 WantedBy=multi-user.target
 ```
 
-#### Using Docker
-```dockerfile
-FROM python:3.11-slim
+#### Using Docker (Recommended)
 
-WORKDIR /app
-COPY requirements.txt .
-RUN pip install -r requirements.txt
+**Build the image:**
+```bash
+# Simple, production-ready build
+docker build -t exam-transcripts-api:latest .
 
-COPY . .
-EXPOSE 8000
+# Test the build locally
+docker run --rm -p 8000:8000 \
+  -e ENVIRONMENT=development \
+  -e SECRET_KEY=dev-secret-key \
+  exam-transcripts-api:latest
+```
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+**Production deployment with Docker Compose:**
+```bash
+# Copy environment template
+cp .env.docker .env
+
+# Update .env with production values
+# Then start all services
+docker-compose up -d
+
+# Or for production profile with nginx
+docker-compose --profile production up -d
+```
+
+**Alternative: Multi-stage UV build (advanced)**
+```bash
+# Use the complex Dockerfile for UV-based builds
+docker build -f Dockerfile.complex -t exam-transcripts-api:uv .
 ```
 
 ### 6. Monitoring & Logging
@@ -181,6 +217,53 @@ The API provides health check endpoints:
 4. **Monitor logs for any errors**
 5. **Set up automated backups**
 6. **Configure monitoring and alerting**
+
+### 🔧 Troubleshooting
+
+#### Docker Build Issues
+
+**Problem**: `OSError: Readme file does not exist: README.md`
+**Solution**: Use the current Dockerfile that avoids pyproject.toml README dependency
+
+**Problem**: `ModuleNotFoundError: No module named 'jose'`
+**Solution**: Ensure all dependencies are installed via requirements.txt
+
+**Problem**: Permission denied for database files
+**Solution**: Check that the app user has proper permissions, or use PostgreSQL in production
+
+#### Runtime Issues
+
+**Problem**: Database connection failed
+**Solution**: 
+- Check DATABASE_URL environment variable
+- Ensure PostgreSQL is running and accessible
+- Verify database credentials
+
+**Problem**: CORS errors from frontend
+**Solution**: Update ALLOWED_ORIGINS in environment variables
+
+**Problem**: JWT token issues
+**Solution**: 
+- Verify SECRET_KEY is properly set
+- Check token expiration settings
+- Ensure consistent SECRET_KEY across app restarts
+
+### 📊 Health Check Commands
+
+```bash
+# Check if API is responding
+curl http://localhost:8000/health
+
+# Check Docker container status
+docker ps
+docker logs <container_id>
+
+# Check database connectivity (PostgreSQL)
+docker exec -it <postgres_container> psql -U <username> -d <database>
+
+# View application logs
+docker logs -f <api_container>
+```
 
 ### 📞 Support
 

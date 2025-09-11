@@ -97,3 +97,20 @@ test_*.db
 # Temporary files
 *.tmp
 *.temp
+
+# Development files (not needed for production)
+scripts/
+tests/
+test_*
+*_test.py
+.env.example
+README_backend.md
+Dockerfile.complex
+Dockerfile.simple
+test-deployment.sh
+
+# UV/uv files (using requirements.txt instead)
+uv.lock
+
+# Ruff cache
+.ruff_cache/
