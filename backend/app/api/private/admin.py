@@ -1,13 +1,20 @@
 from datetime import date
+from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.core.permissions import require_admin
 from app.api.deps import get_current_user, get_db
-from app.models.user import User
+from app.models.user import User as UserModel
 from app.repositories.exam_repository import ExamRepository
+from app.repositories.user_repository import UserRepository
 from app.schemas.exam import ExamCreate, Exam
+from app.schemas.user import User
+from app.repositories.exam_repository import ExamRepository
+from app.repositories.user_repository import UserRepository
+from app.schemas.exam import ExamCreate, Exam
+from app.schemas.user import User as UserResponse
 
 router = APIRouter()
 
@@ -16,7 +23,7 @@ router = APIRouter()
 async def create_exam(
     exam_data: ExamCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: UserModel = Depends(get_current_user)
 ):
     """Create a new exam - only admin can do this"""
     require_admin(current_user.role)
@@ -30,7 +37,7 @@ async def create_exam(
 async def delete_exam(
     exam_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: UserModel = Depends(get_current_user)
 ):
     """Delete an exam - only admin can do this"""
     require_admin(current_user.role)
@@ -49,3 +56,23 @@ async def delete_exam(
     await exam_repo.delete(exam_id)
     
     return {"message": "Exam deleted successfully"}
+
+
+@router.get("/users", response_model=List[User])
+async def get_users(
+    db: Session = Depends(get_db),
+    current_user: UserModel = Depends(get_current_user)
+):
+    """Get all users (Admin and Supervisor access)"""
+    if current_user.role not in ["admin", "supervisor"]:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+    
+    user_repo = UserRepository(db)
+    all_users = await user_repo.get_all()
+    
+    # For supervisors, only return users with "user" role
+    if current_user.role == "supervisor":
+        return [user for user in all_users if user.role == "user"]
+    
+    # For admins, return all users
+    return all_users

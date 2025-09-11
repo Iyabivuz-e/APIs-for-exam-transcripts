@@ -212,6 +212,20 @@ class ApiClient {
     return response.assignments || [];
   }
 
+  // Check if a specific user has any ungraded exams available for voting
+  async checkUserHasUngradedExams(userId: number): Promise<boolean> {
+    try {
+      const ungradedAssignments = await this.getUngradedAssignments();
+      const userAssignments = ungradedAssignments.filter((assignment: any) => 
+        assignment.user_id === userId
+      );
+      return userAssignments.length > 0;
+    } catch (error) {
+      console.error('Error checking user ungraded exams:', error);
+      return false;
+    }
+  }
+
   // Get exam assignments for supervisor to grade (legacy - might not be used)
   async getExamAssignments(examId?: number): Promise<UserExam[]> {
     const endpoint = examId ? `/private/supervisor/exams/${examId}/assignments` : '/private/supervisor/assignments';

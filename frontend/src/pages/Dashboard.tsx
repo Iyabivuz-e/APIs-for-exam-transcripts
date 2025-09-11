@@ -12,14 +12,16 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Card, Button } from '../components/ui';
 import { CreateExamModal } from '../components/CreateExamModal';
-import { AssignVoteModal } from '../components/AssignVoteModal';
+import { AssignVoteToUserModal } from '../components/AssignVoteToUserModal';
 import { apiClient } from '../services/api';
-import { Exam, UserExam } from '../types';
+import { Exam, UserExam, User } from '../types';
 
 export function Dashboard() {
   const { user, logout } = useAuth();
   const [userExams, setUserExams] = useState<UserExam[]>([]);
   const [availableExams, setAvailableExams] = useState<Exam[]>([]);
+  const [allUsers, setAllUsers] = useState<User[]>([]);
+  const [usersWithExams, setUsersWithExams] = useState<Set<number>>(new Set());
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -27,6 +29,8 @@ export function Dashboard() {
   // Modals
   const [showCreateExamModal, setShowCreateExamModal] = useState(false);
   const [showAssignVoteModal, setShowAssignVoteModal] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
+  const [selectedUserEmail, setSelectedUserEmail] = useState<string>('');
 
   const loadData = async () => {
     try {
@@ -42,11 +46,40 @@ export function Dashboard() {
         const userExamsData = await apiClient.getUserExams();
         setUserExams(Array.isArray(userExamsData) ? userExamsData : []);
       }
+      
+      // Load all users for supervisors to assign votes
+      if (user?.role === 'supervisor') {
+        const usersData = await apiClient.getUsers();
+        setAllUsers(Array.isArray(usersData) ? usersData : []);
+        
+        // Check which users have ungraded exams
+        await checkUsersWithExams(usersData);
+      }
     } catch (err) {
       setError('Failed to load dashboard data');
       console.error('Dashboard load error:', err);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const checkUsersWithExams = async (users: User[]) => {
+    try {
+      const usersWithExamsSet = new Set<number>();
+      
+      // Check each user to see if they have ungraded exams
+      await Promise.all(
+        users.map(async (userData) => {
+          const hasExams = await apiClient.checkUserHasUngradedExams(userData.id);
+          if (hasExams) {
+            usersWithExamsSet.add(userData.id);
+          }
+        })
+      );
+      
+      setUsersWithExams(usersWithExamsSet);
+    } catch (error) {
+      console.error('Error checking users with exams:', error);
     }
   };
 
@@ -76,6 +109,19 @@ export function Dashboard() {
     } catch (err: any) {
       setError(err.message || 'Failed to delete exam');
     }
+  };
+
+  const handleAssignVote = (userId: number, userEmail: string) => {
+    // Check if user has ungraded exams before opening modal
+    if (!usersWithExams.has(userId)) {
+      setError('This user has no ungraded exams available for voting');
+      setTimeout(() => setError(null), 3000);
+      return;
+    }
+    
+    setSelectedUserId(userId);
+    setSelectedUserEmail(userEmail);
+    setShowAssignVoteModal(true);
   };
 
   const handleLogout = () => {
@@ -173,29 +219,47 @@ export function Dashboard() {
           </div>
         )}
 
-        {/* Supervisor Role: Assign Votes Only */}
+        {/* Supervisor Role: Assign Votes to Users */}
         {user?.role === 'supervisor' && (
           <div className="space-y-6">
             <div className="flex justify-between items-center">
               <h2 className="text-lg font-medium text-gray-900">Supervisor Dashboard</h2>
-              <Button onClick={() => setShowAssignVoteModal(true)}>
-                Assign Vote
-              </Button>
+              <p className="text-sm text-gray-600">Assign votes to users for their exam submissions</p>
             </div>
             
-            <Card title="Available Exams">
-              {availableExams.length === 0 ? (
-                <p className="text-gray-500">No exams available.</p>
+            {/* Users Section */}
+            <Card title="Users Available for Vote Assignment">
+              {allUsers.length === 0 ? (
+                <p className="text-gray-500">No users available for vote assignment.</p>
               ) : (
-                <div className="space-y-4">
-                  {availableExams.map((exam) => (
-                    <div key={exam.id} className="border border-gray-200 rounded-lg p-4">
-                      <h4 className="font-medium text-gray-900">{exam.title}</h4>
-                      <p className="text-sm text-gray-500">
-                        Date: {new Date(exam.date).toLocaleDateString()}
-                      </p>
-                    </div>
-                  ))}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {allUsers.map((userData) => {
+                    const hasExams = usersWithExams.has(userData.id);
+                    return (
+                      <div key={userData.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h4 className="font-medium text-gray-900">{userData.email}</h4>
+                            <p className="text-sm text-gray-500 capitalize">Role: {userData.role}</p>
+                            {!hasExams && (
+                              <p className="text-xs text-orange-600 mt-1">No ungraded exams available</p>
+                            )}
+                          </div>
+                          <Button 
+                            size="sm"
+                            onClick={() => handleAssignVote(userData.id, userData.email)}
+                            disabled={!hasExams}
+                            className={hasExams 
+                              ? "bg-blue-600 hover:bg-blue-700" 
+                              : "bg-gray-400 cursor-not-allowed"
+                            }
+                          >
+                            {hasExams ? "Assign Vote" : "No Exams"}
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </Card>
@@ -277,11 +341,19 @@ export function Dashboard() {
         }}
       />
       
-      <AssignVoteModal
+      <AssignVoteToUserModal
         isOpen={showAssignVoteModal}
-        onClose={() => setShowAssignVoteModal(false)}
+        onClose={() => {
+          setShowAssignVoteModal(false);
+          setSelectedUserId(null);
+          setSelectedUserEmail('');
+        }}
+        userId={selectedUserId}
+        userEmail={selectedUserEmail}
         onSuccess={() => {
           setShowAssignVoteModal(false);
+          setSelectedUserId(null);
+          setSelectedUserEmail('');
           setSuccessMessage('Vote assigned successfully');
           setTimeout(() => setSuccessMessage(null), 3000); // Clear message after 3 seconds
           loadData();
