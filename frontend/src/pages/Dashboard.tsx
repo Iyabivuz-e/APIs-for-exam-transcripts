@@ -21,7 +21,7 @@ export function Dashboard() {
   const [userExams, setUserExams] = useState<UserExam[]>([]);
   const [availableExams, setAvailableExams] = useState<Exam[]>([]);
   const [allUsers, setAllUsers] = useState<User[]>([]);
-  const [usersWithExams, setUsersWithExams] = useState<Set<number>>(new Set());
+  const [usersWithExams, setUsersWithExams] = useState<Set<string>>(new Set()); // Changed from number to string for UUID
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -29,12 +29,12 @@ export function Dashboard() {
   // Modals
   const [showCreateExamModal, setShowCreateExamModal] = useState(false);
   const [showAssignVoteModal, setShowAssignVoteModal] = useState(false);
-  const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [selectedUserEmail, setSelectedUserEmail] = useState<string>('');
 
   const checkUsersWithExams = useCallback(async (users: User[]) => {
     try {
-      const usersWithExamsSet = new Set<number>();
+      const usersWithExamsSet = new Set<string>(); // Changed from number to string for UUID
       
       // Check each user to see if they have ungraded exams
       await Promise.all(
@@ -86,7 +86,7 @@ export function Dashboard() {
     loadData();
   }, [user, loadData]);
 
-  const handleRegisterForExam = async (examId: number) => {
+  const handleRegisterForExam = async (examId: string) => { // Changed from number to string for UUID
     try {
       await apiClient.registerForExam(examId);
       await loadData(); // Refresh data
@@ -95,7 +95,7 @@ export function Dashboard() {
     }
   };
 
-  const handleDeleteExam = async (examId: number) => {
+  const handleDeleteExam = async (examId: string) => { // Changed from number to string for UUID
     if (!window.confirm('Are you sure you want to delete this exam?')) {
       return;
     }
@@ -110,7 +110,7 @@ export function Dashboard() {
     }
   };
 
-  const handleAssignVote = (userId: number, userEmail: string) => {
+  const handleAssignVote = (userId: string, userEmail: string) => { // Changed from number to string for UUID
     // Check if user has ungraded exams before opening modal
     if (!usersWithExams.has(userId)) {
       setError('This user has no ungraded exams available for voting');
@@ -199,7 +199,7 @@ export function Dashboard() {
                       <div>
                         <h4 className="font-medium text-gray-900">{exam.title}</h4>
                         <p className="text-sm text-gray-500">
-                          Date: {new Date(exam.date).toLocaleDateString()}
+                          Created: {new Date(exam.created_at).toLocaleDateString()}
                         </p>
                       </div>
                       <Button 
@@ -308,7 +308,7 @@ export function Dashboard() {
                         <h4 className="font-medium text-gray-900">{exam.title}</h4>
                         <div className="mt-3 flex items-center justify-between">
                           <span className="text-sm text-gray-500">
-                            Date: {new Date(exam.date).toLocaleDateString()}
+                            Created: {new Date(exam.created_at).toLocaleDateString()}
                           </span>
                           <Button
                             size="sm"

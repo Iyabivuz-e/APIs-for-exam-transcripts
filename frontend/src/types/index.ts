@@ -7,7 +7,7 @@
 
 // User-related types
 export interface User {
-  id: number;
+  id: string;  // Changed from number to string for UUID
   email: string;
   role: UserRole;
   created_at: string;
@@ -31,10 +31,10 @@ export interface TokenResponse {
 
 // Exam-related types
 export interface Exam {
-  id: number;
+  id: string;  // Changed from number to string for UUID
   title: string;
-  description?: string; // Optional since backend doesn't always include it
-  date: string;
+  description: string | null;
+  created_by: string;  // Changed from number to string for UUID
   created_at: string;
   updated_at: string;
 }
@@ -46,14 +46,14 @@ export interface CreateExamData {
 }
 
 export interface VoteAssignment {
-  user_id: number;
-  exam_id: number;
+  exam_id: string;  // Changed from number to string for UUID
+  user_id: string;  // Changed from number to string for UUID
   vote: number;
 }
 
 export interface UserExam {
-  user_id?: number; // Optional for backward compatibility
-  exam_id: number;
+  user_id?: string; // Changed from number to string for UUID
+  exam_id: string; // Changed from number to string for UUID
   exam_title: string;
   exam_date: string;
   vote?: number;

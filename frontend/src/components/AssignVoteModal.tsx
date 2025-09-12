@@ -9,9 +9,9 @@ import { Button, Input, Card } from './ui';
 import { apiClient } from '../services/api';
 
 interface UngradedAssignment {
-  user_id: number;
+  user_id: string;  // Changed from number to string for UUID
   user_email: string;
-  exam_id: number;
+  exam_id: string;  // Changed from number to string for UUID
   exam_title: string;
   exam_date: string;
 }
@@ -141,7 +141,7 @@ export function AssignVoteModal({ isOpen, onClose, onSuccess }: AssignVoteModalP
                   value={selectedAssignment ? `${selectedAssignment.user_id}-${selectedAssignment.exam_id}` : ''}
                   onChange={(e) => {
                     if (e.target.value) {
-                      const [userId, examId] = e.target.value.split('-').map(Number);
+                      const [userId, examId] = e.target.value.split('-'); // Remove .map(Number) since UUIDs are strings
                       const assignment = assignments.find(
                         a => a.user_id === userId && a.exam_id === examId
                       );

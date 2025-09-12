@@ -9,9 +9,9 @@ import { Button, Input, Card } from './ui';
 import { apiClient } from '../services/api';
 
 interface UserExamAssignment {
-  user_id: number;
+  user_id: string;  // Changed from number to string for UUID
   user_email: string;
-  exam_id: number;
+  exam_id: string;  // Changed from number to string for UUID
   exam_title: string;
   exam_date: string;
 }
@@ -20,7 +20,7 @@ interface AssignVoteToUserModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
-  userId: number | null;
+  userId: string | null;  // Changed from number to string for UUID
   userEmail: string;
 }
 
@@ -152,10 +152,10 @@ export function AssignVoteToUserModal({
                   Select Exam to Grade
                 </label>
                 <select
-                  value={selectedExam ? selectedExam.exam_id.toString() : ''}
+                  value={selectedExam ? selectedExam.exam_id : ''}
                   onChange={(e) => {
                     if (e.target.value) {
-                      const examId = parseInt(e.target.value);
+                      const examId = e.target.value; // Keep as string for UUID
                       const exam = userExams.find(exam => exam.exam_id === examId);
                       setSelectedExam(exam || null);
                     } else {
@@ -167,7 +167,7 @@ export function AssignVoteToUserModal({
                 >
                   <option value="">Choose an exam...</option>
                   {userExams.map((exam) => (
-                    <option key={exam.exam_id} value={exam.exam_id.toString()}>
+                    <option key={exam.exam_id} value={exam.exam_id}>
                       {exam.exam_title} ({new Date(exam.exam_date).toLocaleDateString()})
                     </option>
                   ))}

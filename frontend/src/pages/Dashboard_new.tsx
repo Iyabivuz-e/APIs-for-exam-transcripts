@@ -53,7 +53,7 @@ export function Dashboard() {
     loadData();
   }, [user]);
 
-  const handleRegisterForExam = async (examId: number) => {
+  const handleRegisterForExam = async (examId: string) => { // Changed from number to string for UUID
     try {
       await apiClient.registerForExam(examId);
       await loadData(); // Refresh data
@@ -131,7 +131,7 @@ export function Dashboard() {
                     <div key={exam.id} className="border border-gray-200 rounded-lg p-4">
                       <h4 className="font-medium text-gray-900">{exam.title}</h4>
                       <p className="text-sm text-gray-500">
-                        Date: {new Date(exam.date).toLocaleDateString()}
+                        Created: {new Date(exam.created_at).toLocaleDateString()}
                       </p>
                     </div>
                   ))}
@@ -160,7 +160,7 @@ export function Dashboard() {
                     <div key={exam.id} className="border border-gray-200 rounded-lg p-4">
                       <h4 className="font-medium text-gray-900">{exam.title}</h4>
                       <p className="text-sm text-gray-500">
-                        Date: {new Date(exam.date).toLocaleDateString()}
+                        Created: {new Date(exam.created_at).toLocaleDateString()}
                       </p>
                     </div>
                   ))}
@@ -213,7 +213,7 @@ export function Dashboard() {
                         <h4 className="font-medium text-gray-900">{exam.title}</h4>
                         <div className="mt-3 flex items-center justify-between">
                           <span className="text-sm text-gray-500">
-                            Date: {new Date(exam.date).toLocaleDateString()}
+                            Created: {new Date(exam.created_at).toLocaleDateString()}
                           </span>
                           <Button
                             size="sm"

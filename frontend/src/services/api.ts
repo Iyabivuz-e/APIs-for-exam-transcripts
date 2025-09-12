@@ -155,7 +155,7 @@ class ApiClient {
     return response.exams || [];
   }
 
-  async submitVote(examId: number, vote: number): Promise<void> {
+  async submitVote(examId: string, vote: number): Promise<void> {
     return this.request(`/private/users/exams/${examId}/vote`, {
       method: 'POST',
       body: JSON.stringify({ vote }),
@@ -163,7 +163,7 @@ class ApiClient {
   }
 
   // Register for an exam (User only)
-  async registerForExam(examId: number): Promise<any> {
+  async registerForExam(examId: string): Promise<any> {
     return this.request(`/private/users/exams/${examId}/register`, {
       method: 'POST',
     });
@@ -177,7 +177,7 @@ class ApiClient {
     });
   }
 
-  async deleteExam(examId: number): Promise<{ message: string }> {
+  async deleteExam(examId: string): Promise<{ message: string }> {
     return this.request<{ message: string }>(`/private/admin/exams/${examId}`, {
       method: 'DELETE',
     });
@@ -188,14 +188,14 @@ class ApiClient {
   }
 
   // Assign user to exam (Admin only)
-  async assignUserToExam(examId: number, userId: number): Promise<any> {
+  async assignUserToExam(examId: string, userId: string): Promise<any> {
     return this.request(`/private/admin/exams/${examId}/assign-user?user_id=${userId}`, {
       method: 'POST',
     });
   }
 
   // Supervisor methods (only for supervisor users)
-  async assignVote(examId: number, voteData: { user_id: number; vote: number }): Promise<any> {
+  async assignVote(examId: string, voteData: { user_id: string; vote: number }): Promise<any> {
     return this.request(`/private/supervisor/exams/${examId}/vote`, {
       method: 'PUT',
       body: JSON.stringify({
@@ -213,7 +213,7 @@ class ApiClient {
   }
 
   // Check if a specific user has any ungraded exams available for voting
-  async checkUserHasUngradedExams(userId: number): Promise<boolean> {
+  async checkUserHasUngradedExams(userId: string): Promise<boolean> {
     try {
       const ungradedAssignments = await this.getUngradedAssignments();
       const userAssignments = ungradedAssignments.filter((assignment: any) => 
@@ -226,7 +226,7 @@ class ApiClient {
   }
 
   // Get exam assignments for supervisor to grade (legacy - might not be used)
-  async getExamAssignments(examId?: number): Promise<UserExam[]> {
+  async getExamAssignments(examId?: string): Promise<UserExam[]> {
     const endpoint = examId ? `/private/supervisor/exams/${examId}/assignments` : '/private/supervisor/assignments';
     const response = await this.request<{assignments: UserExam[]}>(endpoint);
     return response.assignments || [];
