@@ -199,7 +199,7 @@ export function Dashboard() {
                       <div>
                         <h4 className="font-medium text-gray-900">{exam.title}</h4>
                         <p className="text-sm text-gray-500">
-                          Created: {new Date(exam.created_at).toLocaleDateString()}
+                          Date: {new Date(exam.date).toLocaleDateString()}
                         </p>
                       </div>
                       <Button 

@@ -131,7 +131,7 @@ export function Dashboard() {
                     <div key={exam.id} className="border border-gray-200 rounded-lg p-4">
                       <h4 className="font-medium text-gray-900">{exam.title}</h4>
                       <p className="text-sm text-gray-500">
-                        Created: {new Date(exam.created_at).toLocaleDateString()}
+                        Date: {new Date(exam.date).toLocaleDateString()}
                       </p>
                     </div>
                   ))}
@@ -160,7 +160,7 @@ export function Dashboard() {
                     <div key={exam.id} className="border border-gray-200 rounded-lg p-4">
                       <h4 className="font-medium text-gray-900">{exam.title}</h4>
                       <p className="text-sm text-gray-500">
-                        Created: {new Date(exam.created_at).toLocaleDateString()}
+                        Date: {new Date(exam.date).toLocaleDateString()}
                       </p>
                     </div>
                   ))}
@@ -213,7 +213,7 @@ export function Dashboard() {
                         <h4 className="font-medium text-gray-900">{exam.title}</h4>
                         <div className="mt-3 flex items-center justify-between">
                           <span className="text-sm text-gray-500">
-                            Created: {new Date(exam.created_at).toLocaleDateString()}
+                            Date: {new Date(exam.date).toLocaleDateString()}
                           </span>
                           <Button
                             size="sm"

@@ -34,6 +34,7 @@ export interface Exam {
   id: string;  // Changed from number to string for UUID
   title: string;
   description: string | null;
+  date: string;  // The actual exam date provided by user
   created_by: string;  // Changed from number to string for UUID
   created_at: string;
   updated_at: string;
