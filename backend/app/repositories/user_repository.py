@@ -5,11 +5,17 @@ This module contains the repository class for user-related database operations.
 Implements the repository pattern for data access abstraction.
 """
 
+from typing import Optional, List
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 
 from app.core.permissions import UserRole
 from app.core.security import hash_password
+from app.core.exceptions import DatabaseError, ValidationError
+from app.core.logging import get_logger, get_correlation_id
 from app.models.user import User
+
+logger = get_logger(__name__)
 
 
 class UserRepository:
@@ -41,18 +47,79 @@ class UserRepository:
 
         Returns:
             User: Created user instance
+            
+        Raises:
+            ValidationError: If user data validation fails
+            DatabaseError: If database operation fails
         """
-        hashed_password = hash_password(password)
+        correlation_id = get_correlation_id()
+        
+        try:
+            logger.info(
+                "Creating new user",
+                extra={
+                    "correlation_id": correlation_id,
+                    "email": email,
+                    "role": role.value
+                }
+            )
+            
+            hashed_password = hash_password(password)
+            user = User(email=email, hashed_password=hashed_password, role=role)
+            
+            self.db.add(user)
+            self.db.commit()
+            self.db.refresh(user)
+            
+            logger.info(
+                "User created successfully",
+                extra={
+                    "correlation_id": correlation_id,
+                    "user_id": user.id,
+                    "email": email
+                }
+            )
+            
+            return user
+            
+        except IntegrityError as e:
+            self.db.rollback()
+            logger.error(
+                "User creation failed - integrity constraint violation",
+                extra={
+                    "correlation_id": correlation_id,
+                    "email": email,
+                    "error": str(e.orig)
+                }
+            )
+            raise ValidationError(f"User with email {email} already exists")
+            
+        except SQLAlchemyError as e:
+            self.db.rollback()
+            logger.error(
+                "User creation failed - database error",
+                extra={
+                    "correlation_id": correlation_id,
+                    "email": email,
+                    "error": str(e)
+                }
+            )
+            raise DatabaseError("Failed to create user") from e
+            
+        except Exception as e:
+            self.db.rollback()
+            logger.error(
+                "User creation failed - unexpected error",
+                extra={
+                    "correlation_id": correlation_id,
+                    "email": email,
+                    "error": str(e),
+                    "error_type": type(e).__name__
+                }
+            )
+            raise DatabaseError("Unexpected error during user creation") from e
 
-        user = User(email=email, hashed_password=hashed_password, role=role)
-
-        self.db.add(user)
-        self.db.commit()
-        self.db.refresh(user)
-
-        return user
-
-    async def get_by_id(self, user_id: str) -> User | None:
+    async def get_by_id(self, user_id: str) -> Optional[User]:
         """
         Get user by ID.
 
@@ -61,10 +128,55 @@ class UserRepository:
 
         Returns:
             User or None: User if found, None otherwise
+            
+        Raises:
+            DatabaseError: If database query fails
         """
-        return self.db.query(User).filter(User.id == user_id).first()
+        correlation_id = get_correlation_id()
+        
+        try:
+            logger.debug(
+                "Fetching user by ID",
+                extra={
+                    "correlation_id": correlation_id,
+                    "user_id": user_id
+                }
+            )
+            
+            user = self.db.query(User).filter(User.id == user_id).first()
+            
+            if user:
+                logger.debug(
+                    "User found by ID",
+                    extra={
+                        "correlation_id": correlation_id,
+                        "user_id": user_id,
+                        "email": user.email
+                    }
+                )
+            else:
+                logger.debug(
+                    "User not found by ID",
+                    extra={
+                        "correlation_id": correlation_id,
+                        "user_id": user_id
+                    }
+                )
+            
+            return user
+            
+        except SQLAlchemyError as e:
+            logger.error(
+                "Failed to fetch user by ID",
+                extra={
+                    "correlation_id": correlation_id,
+                    "user_id": user_id,
+                    "error": str(e)
+                }
+            )
+            raise DatabaseError("Failed to retrieve user") from e
 
-    async def get_by_email(self, email: str) -> User | None:
+    async def get_by_email(self, email: str) -> Optional[User]:
         """
         Get user by email address.
 
@@ -73,8 +185,53 @@ class UserRepository:
 
         Returns:
             User or None: User if found, None otherwise
+            
+        Raises:
+            DatabaseError: If database query fails
         """
-        return self.db.query(User).filter(User.email == email).first()
+        correlation_id = get_correlation_id()
+        
+        try:
+            logger.debug(
+                "Fetching user by email",
+                extra={
+                    "correlation_id": correlation_id,
+                    "email": email
+                }
+            )
+            
+            user = self.db.query(User).filter(User.email == email).first()
+            
+            if user:
+                logger.debug(
+                    "User found by email",
+                    extra={
+                        "correlation_id": correlation_id,
+                        "user_id": user.id,
+                        "email": email
+                    }
+                )
+            else:
+                logger.debug(
+                    "User not found by email",
+                    extra={
+                        "correlation_id": correlation_id,
+                        "email": email
+                    }
+                )
+            
+            return user
+            
+        except SQLAlchemyError as e:
+            logger.error(
+                "Failed to fetch user by email",
+                extra={
+                    "correlation_id": correlation_id,
+                    "email": email,
+                    "error": str(e)
+                }
+            )
+            raise DatabaseError("Failed to retrieve user") from e
 
     async def get_all(
         self, skip: int = 0, limit: int = 100, role_filter: UserRole | None = None

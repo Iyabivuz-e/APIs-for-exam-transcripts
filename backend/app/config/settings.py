@@ -7,7 +7,7 @@ Uses Pydantic BaseSettings for environment variable management and validation.
 
 import logging
 from functools import lru_cache
-from typing import List, Optional, Union
+from typing import List, Literal, Optional, Union
 
 from pydantic import Field, validator
 from pydantic_settings import BaseSettings
@@ -29,24 +29,38 @@ class Settings(BaseSettings):
         allowed_origins: List of allowed CORS origins
         log_level: Logging level
         enable_docs: Enable API documentation endpoints
+        auto_create_users: Auto-create default users (development only)
     """
 
-    # Environment
-    environment: str = "development"
+    # Environment - Use Literal for type safety
+    environment: Literal["development", "staging", "production"] = "development"
 
     # Server
     host: str = "0.0.0.0"
     port: int = 8000
+    
+    # Logging
+    log_level: str = "INFO"
 
     # Database
-    database_url: str = "sqlite:///./exam_transcripts.db"
-    test_database_url: str = "sqlite:///./test_exam_transcripts.db"
+    database_url: str = Field(
+        default="sqlite:///./exam_transcripts.db",
+        description="Database connection URL"
+    )
+    test_database_url: str = Field(
+        default="sqlite:///./test_exam_transcripts.db",
+        description="Test database connection URL"
+    )
 
     # PostgreSQL settings for production
     postgres_ssl_mode: str = "require"  # Can be disabled if needed
 
     # Security
-    secret_key: str = "your-super-secret-key-change-this-in-production"
+    secret_key: str = Field(
+        default="your-super-secret-key-change-this-in-production",
+        min_length=32,
+        description="JWT secret key - must be changed in production"
+    )
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
 
@@ -60,45 +74,60 @@ class Settings(BaseSettings):
     frontend_url: Optional[str] = None  # Can be set via environment variable
 
     # Logging
-    log_level: str = "INFO"
+    log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = Field(
+        default="INFO",
+        description="Logging level"
+    )
 
-    # API Documentation
-    enable_docs: bool = True
+    # API Documentation - disabled in production by default
+    enable_docs: bool = Field(
+        default=True,
+        description="Enable API documentation endpoints"
+    )
+    
+    # Development features
+    auto_create_users: bool = Field(
+        default=True,
+        description="Auto-create default users (development only)"
+    )
 
-    @validator("environment")
-    def validate_environment(cls, v):
-        """Validate environment value."""
-        allowed_environments = ["development", "staging", "production"]
-        if v not in allowed_environments:
-            raise ValueError(f"Environment must be one of: {allowed_environments}")
+    @validator("database_url")
+    def validate_database_url(cls, v, values):
+        """Validate database URL for production."""
+        environment = values.get("environment", "development")
+        if environment == "production" and "sqlite" in v.lower():
+            raise ValueError("SQLite is not recommended for production. Use PostgreSQL.")
         return v
 
     @validator("secret_key")
     def validate_secret_key(cls, v, values):
         """Validate secret key in production."""
+        environment = values.get("environment", "development")
+        if environment == "production" and len(v) < 32:
+            raise ValueError("Secret key must be at least 32 characters in production")
         if (
-            values.get("environment") == "production"
+            environment == "production"
             and v == "your-super-secret-key-change-this-in-production"
         ):
             raise ValueError("Secret key must be changed in production environment")
         return v
 
-    @validator("log_level")
-    def validate_log_level(cls, v):
-        """Validate log level."""
-        allowed_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
-        if v.upper() not in allowed_levels:
-            raise ValueError(f"Log level must be one of: {allowed_levels}")
-        return v.upper()
-
     @validator("enable_docs")
     def validate_docs_in_production(cls, v, values):
         """Disable docs in production unless explicitly enabled."""
-        if values.get("environment") == "production" and v is True:
-            # Allow override but warn
-            return v
-        elif values.get("environment") == "production":
-            return False
+        environment = values.get("environment", "development")
+        if environment == "production" and v is True:
+            # Log warning but allow override
+            import warnings
+            warnings.warn("API documentation is enabled in production")
+        return v
+    
+    @validator("auto_create_users")
+    def validate_auto_create_users(cls, v, values):
+        """Disable auto user creation in production."""
+        environment = values.get("environment", "development")
+        if environment == "production" and v is True:
+            raise ValueError("auto_create_users must be disabled in production")
         return v
 
     @property

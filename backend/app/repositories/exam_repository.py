@@ -6,12 +6,18 @@ Implements the repository pattern for data access abstraction.
 """
 
 from datetime import date
+from typing import Optional, List
 
 from sqlalchemy import and_, asc, desc
 from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 
+from app.core.exceptions import DatabaseError, ValidationError
+from app.core.logging import get_logger, get_correlation_id
 from app.models.exam import Exam
 from app.models.user_exam import UserExam
+
+logger = get_logger(__name__)
 
 
 class ExamRepository:
@@ -40,16 +46,78 @@ class ExamRepository:
 
         Returns:
             Exam: Created exam instance
+            
+        Raises:
+            ValidationError: If exam data validation fails
+            DatabaseError: If database operation fails
         """
-        exam = Exam(title=title, date=exam_date)
+        correlation_id = get_correlation_id()
+        
+        try:
+            logger.info(
+                "Creating new exam",
+                extra={
+                    "correlation_id": correlation_id,
+                    "title": title,
+                    "exam_date": exam_date.isoformat()
+                }
+            )
+            
+            exam = Exam(title=title, date=exam_date)
+            
+            self.db.add(exam)
+            self.db.commit()
+            self.db.refresh(exam)
+            
+            logger.info(
+                "Exam created successfully",
+                extra={
+                    "correlation_id": correlation_id,
+                    "exam_id": exam.id,
+                    "title": title
+                }
+            )
+            
+            return exam
+            
+        except IntegrityError as e:
+            self.db.rollback()
+            logger.error(
+                "Exam creation failed - integrity constraint violation",
+                extra={
+                    "correlation_id": correlation_id,
+                    "title": title,
+                    "error": str(e.orig)
+                }
+            )
+            raise ValidationError(f"Exam creation failed due to data constraints")
+            
+        except SQLAlchemyError as e:
+            self.db.rollback()
+            logger.error(
+                "Exam creation failed - database error",
+                extra={
+                    "correlation_id": correlation_id,
+                    "title": title,
+                    "error": str(e)
+                }
+            )
+            raise DatabaseError("Failed to create exam") from e
+            
+        except Exception as e:
+            self.db.rollback()
+            logger.error(
+                "Exam creation failed - unexpected error",
+                extra={
+                    "correlation_id": correlation_id,
+                    "title": title,
+                    "error": str(e),
+                    "error_type": type(e).__name__
+                }
+            )
+            raise DatabaseError("Unexpected error during exam creation") from e
 
-        self.db.add(exam)
-        self.db.commit()
-        self.db.refresh(exam)
-
-        return exam
-
-    async def get_by_id(self, exam_id: str) -> Exam | None:
+    async def get_by_id(self, exam_id: str) -> Optional[Exam]:
         """
         Get exam by ID.
 
@@ -58,8 +126,53 @@ class ExamRepository:
 
         Returns:
             Exam or None: Exam if found, None otherwise
+            
+        Raises:
+            DatabaseError: If database query fails
         """
-        return self.db.query(Exam).filter(Exam.id == exam_id).first()
+        correlation_id = get_correlation_id()
+        
+        try:
+            logger.debug(
+                "Fetching exam by ID",
+                extra={
+                    "correlation_id": correlation_id,
+                    "exam_id": exam_id
+                }
+            )
+            
+            exam = self.db.query(Exam).filter(Exam.id == exam_id).first()
+            
+            if exam:
+                logger.debug(
+                    "Exam found by ID",
+                    extra={
+                        "correlation_id": correlation_id,
+                        "exam_id": exam_id,
+                        "title": exam.title
+                    }
+                )
+            else:
+                logger.debug(
+                    "Exam not found by ID",
+                    extra={
+                        "correlation_id": correlation_id,
+                        "exam_id": exam_id
+                    }
+                )
+            
+            return exam
+            
+        except SQLAlchemyError as e:
+            logger.error(
+                "Failed to fetch exam by ID",
+                extra={
+                    "correlation_id": correlation_id,
+                    "exam_id": exam_id,
+                    "error": str(e)
+                }
+            )
+            raise DatabaseError("Failed to retrieve exam") from e
 
     async def get_by_title(self, title: str) -> Exam | None:
         """
