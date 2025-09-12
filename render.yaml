@@ -1,0 +1,42 @@
+services:
+  - type: web
+    name: exam-transcripts-api
+    runtime: python
+    env: python
+    region: frankfurt  # or your preferred region
+    plan: free  # or starter/standard based on your needs
+    
+    # Build configuration
+    buildCommand: pip install -r requirements.txt
+    
+    # Start command
+    startCommand: ./start.sh
+    
+    # Health check
+    healthCheckPath: /health
+    
+    # Environment variables
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: AUTO_CREATE_USERS
+        value: false
+      - key: ENABLE_DOCS
+        value: false
+      - key: LOG_LEVEL
+        value: INFO
+      - key: ALGORITHM
+        value: HS256
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: 30
+      - key: HOST
+        value: 0.0.0.0
+      - key: PORT
+        value: 8000
+      - key: ALLOWED_ORIGINS
+        value: https://exam-transcripts.vercel.app
+      # Sensitive variables - set these in Render dashboard
+      - key: DATABASE_URL
+        sync: false  # Set this in Render dashboard
+      - key: SECRET_KEY
+        sync: false  # Set this in Render dashboard
