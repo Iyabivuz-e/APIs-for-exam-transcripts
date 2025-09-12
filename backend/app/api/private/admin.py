@@ -32,7 +32,7 @@ async def create_exam(
 
 @router.delete("/exams/{exam_id}")
 async def delete_exam(
-    exam_id: int,
+    exam_id: str,
     db: Session = Depends(get_db),
     current_user: UserModel = Depends(get_current_user),
 ):

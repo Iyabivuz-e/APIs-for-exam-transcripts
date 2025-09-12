@@ -65,7 +65,7 @@ async def get_ungraded_assignments(
 
 @router.put("/exams/{exam_id}/vote", response_model=dict)
 async def assign_vote_to_exam(
-    exam_id: int,
+    exam_id: str,
     vote_data: VoteAssignment,
     current_user: User = Depends(get_current_supervisor_user),
     db: Session = Depends(get_db),

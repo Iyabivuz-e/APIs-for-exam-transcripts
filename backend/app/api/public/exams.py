@@ -96,7 +96,7 @@ async def get_public_exams(
 
 
 @router.get("/exams/{exam_id}", response_model=dict)
-async def get_public_exam_details(exam_id: int, db: Session = Depends(get_db)):
+async def get_public_exam_details(exam_id: str, db: Session = Depends(get_db)):
     """
     Get details of a specific exam (public endpoint).
 

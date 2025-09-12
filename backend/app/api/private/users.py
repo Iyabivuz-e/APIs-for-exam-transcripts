@@ -18,7 +18,7 @@ router = APIRouter()
 
 @router.post("/exams/{exam_id}/register", response_model=dict)
 async def register_for_exam(
-    exam_id: int,
+    exam_id: str,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):

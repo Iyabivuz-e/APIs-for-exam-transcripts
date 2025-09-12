@@ -71,7 +71,7 @@ class Exam(Base):
         votes = [ue.vote for ue in self.user_exams if ue.vote is not None]
         return sum(votes) / len(votes) if votes else 0.0
 
-    def has_user(self, user_id: int) -> bool:
+    def has_user(self, user_id: str) -> bool:
         """
         Check if a specific user is assigned to this exam.
 
